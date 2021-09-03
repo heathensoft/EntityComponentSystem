@@ -1,6 +1,41 @@
 
 ## Entity Component System
 
+This is a module for a game engine I am working on. The module is still under development.
+
+
+There are more than a few ways to design an ECS. And being written in Java, you can't really
+manage caching / memory like you could do with languages like C or C++.
+Where you could keep components tightly stacked next to each other i memory, to increase performance.
+
+Even without this control, it still makes creating elements for .ie interactive applications more manageable.
+Instead of inheritance you have "entities" with components.
+.ie if you want your entity to be able to fly, you might give it the flying component.
+The flying component could have a layout like this:
+
+
+public class Flying implements Component
+
+    int altitude;
+    float verticalForce;
+
+
+When adding a component, the entity (basically an id) will be added to systems that are interested
+in flying components. Components are data and systems process data.
+.ie a rendering system might need a Sprite component and a Transform component.
+Any entity meeting those requirements will be added to the system.
+It does not matter what abstractions you impose on an entity. If you add a Flying component to
+a Fish or a UI-button it has the potential to fly. And you can do this at runtime.
+So a Fish is just a collection of properties, if you remove some components and add some other
+that same entity is a trebuchet. You get the idea. It's modularity, not inheritance.
+So that's an ECS in a nutshell.
+
+Core design principles:
+
+* Components have no functionality
+* Systems have no state
+* Entities are essentially id's
+
 
 
 

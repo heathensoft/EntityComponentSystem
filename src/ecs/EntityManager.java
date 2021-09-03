@@ -57,7 +57,7 @@ public class EntityManager extends Pool<Entity> {
     @Override
     protected void reset(Entity e) {
 
-        e.reset();
+        e.reset(); // just reset the bits here. No reason to have a method in entity for it. Unless entity need it internal.
     }
 
     /**
