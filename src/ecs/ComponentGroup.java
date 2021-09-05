@@ -9,8 +9,8 @@ package ecs;
 public class ComponentGroup {
 
     private String name;
-    private final long mask;
-    private final short id;
+    protected final long mask;
+    protected final short id;
 
     protected ComponentGroup(long mask, short id) {
         this.mask = mask;
@@ -19,7 +19,7 @@ public class ComponentGroup {
     }
 
     public boolean isMember(Entity e) {
-        return containsAll(e.typeFlags());
+        return containsAll(e.components());
     }
 
     public String name() {

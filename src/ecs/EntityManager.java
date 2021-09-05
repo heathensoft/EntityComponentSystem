@@ -14,12 +14,10 @@ import ecs.util.IntStack;
 public class EntityManager extends Pool<Entity> {
 
     private final ECS ecs;
+    private ComponentManager componentManager;
 
     private final IntStack freeIDs = new IntStack();
     private int genID = 0;
-    protected int newCount = 0;
-    protected int discardCount = 0; // can have this in pool
-    protected int disabledCount = 0;
 
     private final Container<Entity> alive;
     private final Container<Entity> dirty;
@@ -35,19 +33,36 @@ public class EntityManager extends Pool<Entity> {
 
 
 
-
-
-
-    protected void addToDirty(Entity e) {
-
+    // does not need to refresh if replacing existing component
+    protected void addComponent(Entity e, Component c) {
+        if (!componentManager.addComponent(e,c)) // if !replaced
+            refresh(e);
     }
 
+    protected void removeComponent(Entity e, ComponentType type) {
+        // check if entity has component
+    }
+
+    protected void disable(Entity e) {
+        if (e.enabled) refresh(e);
+        e.enabled = false;
+    }
+
+    protected void enable(Entity e) {
+        if (!e.enabled) refresh(e);
+        e.enabled = true;
+    }
+
+    private void refresh(Entity e) {
+        if (e.dirty) return;
+        dirty.push(e);
+        e.dirty = true;
+    }
 
     @Override
     protected Entity newObject() {
         int id = freeIDs.isEmpty() ? genID : freeIDs.pop();
-        newCount++; // have this in pool
-        return new Entity(this,ecs.componentManager,id);
+        return new Entity(id);
     }
 
     /**
@@ -55,7 +70,7 @@ public class EntityManager extends Pool<Entity> {
      * @param e The freed Entity
      */
     @Override
-    protected void reset(Entity e) {
+    protected void onObjectPooled(Entity e) {
 
         e.reset(); // just reset the bits here. No reason to have a method in entity for it. Unless entity need it internal.
     }
@@ -66,8 +81,11 @@ public class EntityManager extends Pool<Entity> {
      * @param e The discarded Entity
      */
     @Override
-    protected void discard(Entity e) {
+    protected void onObjectDiscarded(Entity e) {
         freeIDs.push(e.id());
-        discardCount++;
+    }
+
+    public int entityCount() {
+        return alive.itemCount();
     }
 }

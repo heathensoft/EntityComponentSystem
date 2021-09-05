@@ -1,6 +1,8 @@
 package ecs;
 
-import ecs.ECS;
+
+import ecs.util.Container;
+import ecs.util.Iterator;
 
 import java.util.Arrays;
 
@@ -14,7 +16,7 @@ import java.util.Arrays;
  * It won't call the garbage collector explicitly.
  *
  * It also keeps track of run-time ECS statistics for debugging purposes.
- * It runs in 20 seconds time-step.
+ * It runs in 20 seconds time-step. Some component stats have a 20sec delay.
  *
  * Timers are added automatically when a new ComponentType has been created by the ComponentManager.
  * Specific container timers are started / reset when a new component of given type are added to
@@ -45,13 +47,28 @@ public class MemoryManager {
     private static final short CONTAINER_CHECKED    = 0x0F;
     private static final short POOL_CHECKED         = 0xF0;
     private static final short UP_TO_DATE           = 0xFF;
-    private final short[] timers; // 2 timers per. index
+
+    private final short[] timers;
     private float accumulator;
     private byte timerCount;
     private boolean enabled;
+    private int componentsInMemory;
+    private int componentsCreated;
+    private int componentsDestroyed;
+    private int componentsRecycled;
     private float memoryUsage;
     private int memoryUsageMB;
     private int refitCount;
+
+    private final Iterator<ComponentPool<? extends Component>> poolIterator = new Iterator<>() {
+        @Override
+        public void next(ComponentPool<? extends Component> pool) {
+            componentsDestroyed += pool.componentsDestroyed();
+            componentsInMemory += pool.componentsInMemory();
+            componentsRecycled += pool.componentsRecycled();
+            componentsCreated += pool.componentsCreated();
+        }
+    };
 
     private final ECS ecs;
 
@@ -59,16 +76,34 @@ public class MemoryManager {
         this.ecs = ecs;
         timers = new short[Long.SIZE];
         Arrays.fill(timers,UP_TO_DATE);
-        accumulator = timerCount = 0;
-        queryRuntimeMemory();
+        componentsInMemory = 0;
+        componentsCreated = 0;
+        componentsDestroyed = 0;
+        componentsRecycled = 0;
+        timerCount = 0;
+        accumulator = 0;
+        refitCount = 0;
         enabled = true;
+        queryRuntimeMemory();
     }
 
     protected void update(float dt) {
+
         accumulator += dt;
+        // 20 second time-interval
         if (accumulator > TIME_STEP) {
             accumulator -= TIME_STEP;
             queryRuntimeMemory();
+
+            // Update component statistics from pool info.
+            if (poolCount() != 0) {
+                Container<ComponentPool<? extends Component>> pools;
+                pools = ecs.componentManager.getPools();
+                resetComponentStats();
+                pools.iterate(poolIterator);
+            }
+
+            // check inactive component pools and containers
             if (enabled) {
                 for (byte i = 0; i < timerCount; i++) {
                     if (timers[i] != UP_TO_DATE) {
@@ -90,15 +125,15 @@ public class MemoryManager {
         }
     }
 
-    protected void addTimer() {
+    protected void newTimer() {
         timerCount++;
     }
 
-    protected void resetContainerTimer(int index) {
+    protected void resetContainerTimer(byte index) {
         timers[index] &= ~CONTAINER_CHECKED;
     }
 
-    protected void resetPoolTimer(int index) {
+    protected void resetPoolTimer(byte index) {
         timers[index] &= ~POOL_CHECKED;
     }
 
@@ -116,6 +151,13 @@ public class MemoryManager {
         int total = (int)(runtime.totalMemory()/1000000L);
         memoryUsage = (float) (Math.round((1 - (float)free / total) * 10000) / 100.0);
         memoryUsageMB = total - free;
+    }
+
+    private void resetComponentStats() {
+        componentsCreated = 0;
+        componentsRecycled = 0;
+        componentsInMemory = 0;
+        componentsDestroyed = 0;
     }
 
     public void enable() {
@@ -138,7 +180,51 @@ public class MemoryManager {
         return memoryUsageMB;
     }
 
-    public int getRefitCount() {
+    public int entitiesInPlay() {
+        return 0;
+    }
+
+    public int entitiesCreated() {
+        return 0;
+    }
+
+    public int entitiesDestroyed() {
+        return 0;
+    }
+
+    public int entitiesRecycled() {
+        return 0;
+    }
+
+    public int componentInPlay() {
+        return ecs.componentManager.componentCount();
+    }
+
+    public int componentsCreated() {
+        return componentsCreated;
+    }
+
+    public int componentsDestroyed() {
+        return componentsDestroyed;
+    }
+
+    public int componentsRecycled() {
+        return componentsRecycled;
+    }
+
+    public int componentsInMemory() {
+        return componentsInMemory;
+    }
+
+    public int containerRefits() {
         return refitCount;
     }
+
+    public int poolCount() {
+        return ecs.componentManager.poolCount();
+    }
+
+
+
+
 }

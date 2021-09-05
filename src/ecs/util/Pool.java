@@ -6,27 +6,28 @@ package ecs.util;
  */
 
 
-public abstract class Pool<T> { // pass in memory manager (should time the usage. fit if not used for 5 min)
+public abstract class Pool<T> {
 
-    private final int max;
     private int peak;
-
+    private final int max;
+    private int newInstanceCount = 0;
     protected final Container<T> free;
 
-    public Pool(int initialCap, int max) {
-        free = new Container<T>(initialCap);
+    public Pool(int initialCapacity, int max) {
+        free = new Container<>(initialCapacity);
         this.max = max;
     }
 
-    public Pool(int initialCap) {
-        this(initialCap,Integer.MAX_VALUE);
+    public Pool(int initialCapacity) {
+        this(initialCapacity,Integer.MAX_VALUE);
     }
 
     public void fill (int n) {
         n = Math.min(n+ size(),max);
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++)
             free.push(newObject());
-        } peak = Math.max(peak, size());
+        peak = Math.max(peak, size());
+        newInstanceCount += n;
     }
 
     public boolean fit() {
@@ -35,19 +36,32 @@ public abstract class Pool<T> { // pass in memory manager (should time the usage
 
     abstract protected T newObject();
 
-    public final T obtain() {return size() == 0 ? newObject() : free.pop();}
+    public final T obtain() {
+        T object;
+        if (size() == 0) {
+            object = newObject();
+            newInstanceCount++;
+            onObjectObtained(object,true);
+        }
+        else {
+            object = free.pop();
+            onObjectObtained(object,false);
+        }
+        return object;
+    }
 
     public void free(T object) {
         if (object == null) throw new IllegalArgumentException("object cannot be null.");
         if (size() < max) {
             free.push(object);
             peak = Math.max(peak, size());
-            reset(object);
+            onObjectPooled(object);
             if (object instanceof Poolable)
-                ((Poolable)object).reset();
-        } else discard(object);
+                ((Poolable)object).onPooled();
+        } else onObjectDiscarded(object);
     }
 
+    // todo: Add equivalent for Collections
     /**
      *
      * @param objects to be freed
@@ -63,10 +77,10 @@ public abstract class Pool<T> { // pass in memory manager (should time the usage
                 if (object == null) continue;
                 if (size() < max) {
                     freeObjects.push(object);
-                    reset(object);
+                    onObjectPooled(object);
                     if (object instanceof Poolable)
-                        ((Poolable)object).reset();
-                } else discard(object);
+                        ((Poolable)object).onPooled();
+                } else onObjectDiscarded(object);
             }
         }
         else {
@@ -76,23 +90,25 @@ public abstract class Pool<T> { // pass in memory manager (should time the usage
                 if (object == null) continue;
                 if (size() < max) {
                     freeObjects.push(object);
-                    reset(object);
+                    onObjectPooled(object);
                     if (object instanceof Poolable)
-                        ((Poolable)object).reset();
-                } else discard(object);
+                        ((Poolable)object).onPooled();
+                } else onObjectDiscarded(object);
             }
         }
         peak = Math.max(peak, size());
     }
 
-    protected void reset(T object) { };
+    protected void onObjectPooled(T object) { }
 
-    protected void discard(T object) { };
+    protected void onObjectDiscarded(T object) { }
+
+    protected void onObjectObtained(T object, boolean newInstance) { }
 
     public void clear(boolean resize) {
         int n = size();
         for (int i = 0; i < n; i++)
-            discard(free.get(i));
+            onObjectDiscarded(free.get(i));
         free.clear();
         if (resize) free.fit(false);
     }
@@ -107,5 +123,9 @@ public abstract class Pool<T> { // pass in memory manager (should time the usage
 
     public int peak() {
         return peak;
+    }
+
+    public int newInstancesCreated() {
+        return newInstanceCount;
     }
 }

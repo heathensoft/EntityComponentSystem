@@ -3,7 +3,7 @@ package ecs;
 
 /**
  *
- * Empty slate. Do as you please.
+ * Empty slate. Marker-interface
  *
  * It's supposed to be a functionless struct of public data.
  * When added to an Entity, EntitySystems that are interested will add the entity

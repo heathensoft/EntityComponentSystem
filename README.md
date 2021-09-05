@@ -8,7 +8,7 @@ There are more than a few ways to design an ECS. And being written in Java, you 
 manage caching / memory like you could do with languages like C or C++.
 Where you could keep components tightly stacked next to each other i memory, to increase performance.
 
-Even without this control, it still makes creating elements for .ie interactive applications more manageable.
+Even without this control, it still makes creating elements for interactive applications more manageable.
 Instead of inheritance you have "entities" with components.
 .ie if you want your entity to be able to fly, you might give it the flying component.
 The flying component could have a layout like this:

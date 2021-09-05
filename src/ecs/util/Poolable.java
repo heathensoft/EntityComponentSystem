@@ -8,5 +8,5 @@ package ecs.util;
 
 public interface Poolable {
 
-    void reset();
+    void onPooled();
 }

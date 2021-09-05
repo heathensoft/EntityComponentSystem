@@ -11,101 +11,94 @@ import ecs.util.KVShared;
 
 
 public class Entity extends KVShared {
-    
 
-    private final EntityManager entityManager;
-    private final ComponentManager componentManager;
+    protected final int id;
+    private long systems = 0L;
+    private long components = 0L;
+    private long enabledComponents = 0L;
+    protected boolean enabled = true;
+    protected boolean dirty = false;
 
-    private final int id;
-    private long typeFlags;
-    private long systemFlags;
-
-    boolean enabled;
-    boolean dirty;
-
-
-    protected Entity(EntityManager entityManager, ComponentManager componentManager, int id) {
-        this.entityManager = entityManager;
-        this.componentManager = componentManager;
-        this.id = id;;
-    }
-
-
-    public void enable() {
-        if (!isEnabled())
-            refresh();
-        enabled = true;
-    }
-
-    public void disable(){
-        if (isEnabled())
-            refresh();
-        enabled = false;
-    }
-
-    public void refresh() {
-        if (isDirty()) return;
-        //manager.addToDirty(this);
-        dirty = true;
-    }
-
-    protected void refreshed() {
-        if (!isDirty()) return;
-        dirty = false;
-    }
+    protected Entity( int id) { this.id = id; }
 
     public void reset() {
-
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public boolean isDirty() {
-        return dirty;
+        enabled = true;
+        dirty = false;
+        systems = 0L;
+        components = 0L;
+        enabledComponents = 0L;
     }
 
     public int id() {
         return id;
     }
 
-    protected long typeFlags() {
-        return typeFlags;
-    }
-    
-    protected void addTypeFlag(long bit) {
-        typeFlags |= bit;
+    public boolean isDirty() {
+        return dirty;
     }
 
-    protected void setTypeFlags(long typeFlags) {
-        this.typeFlags = typeFlags;
-    }
-    
-    protected void removeTypeFlag(long bit) {
-        typeFlags &= ~bit;
-    }
-    
-    protected long systemFlags() {
-        return systemFlags;
-    }
-    
-    protected void addSystemFlag(long bit) {
-        systemFlags |= bit;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    protected void setSystemFlags(long systemFlags) {
-        this.systemFlags = systemFlags;
+    protected long systems() {
+        return systems;
+    }
+
+    protected boolean inSystem(long bit) {
+        return (systems & bit) == bit;
+    }
+
+    protected void addSystem(long bit) {
+        systems |= bit;
+    }
+
+    protected void setSystems(long bits) {
+        systems = bits;
+    }
+
+    protected void removeSystem(long bit) {
+        systems &= ~bit;
+    }
+
+    protected long components() {
+        return components;
+    }
+
+    protected boolean hasComponent(long bit) {
+        return (components & bit) == bit;
     }
     
-    protected void removeSystemFlag(long bit) {
-        systemFlags &= ~bit;
+    protected void addComponent(long bit) {
+        components |= bit;
     }
 
+    protected void setComponents(long bits) {
+        components = bits;
+    }
+    
+    protected void removeComponent(long bit) {
+        components &= ~bit;
+    }
 
-    public void printGroups() {
-        System.out.println(this);
-        //ComponentGroup.printGroups(typeFlags);
+    protected long enabledComponents() {
+        return enabledComponents;
+    }
+
+    protected boolean isComponentEnabled(long bit) {
+        return (enabledComponents & bit) == bit;
+    }
+
+    protected void enableComponent(long bit) {
+        enabledComponents |= bit;
+    }
+
+    protected void setEnabledComponents(long bits) {
+        enabledComponents = bits;
+    }
+
+    protected void disableComponent(long bit) {
+        enabledComponents &= ~bit;
     }
 
     @Override
