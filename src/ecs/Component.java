@@ -5,14 +5,21 @@ package ecs;
  *
  * Empty slate. Marker-interface
  *
- * It's supposed to be a functionless struct of public data.
- * When added to an Entity, EntitySystems that are interested will add the entity
- * to itself. The EntitySystem is where all the specific functionality goes.
+ * It's supposed to be a functionless struct of data.
+ * When linked to an Entity, EntitySystems that are interested will add the entity to itself.
  *
- * Create new instances or perhaps use ComponentPools for heavier ones:
+ * EntitySystems provides all functionality:
+ * i.e. foreach entity -> move(entity)
+ *
+ * Use of ComponentPool:
  * To register a pool in the system: ecs.componentManager.addPool(thePool,clazz);
- * The system will then start to return components to the pool, and it can be
+ * The system will then be able to return components back into the pool, and it can be
  * monitored by the MemoryManager.
+ *
+ * ComponentPools and data reset:
+ * You can reset the Components' data internally by having it implement the Poolable Interface,
+ * Or you could let the ComponentPool handle it ( resetComponent() ).
+ * Both methods are called when the component instance is returned to the pool (not discarded).
  *
  *
  * @author Frederik Dahl

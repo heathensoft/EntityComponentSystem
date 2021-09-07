@@ -11,6 +11,7 @@ public abstract class EntitySystem {
     
 
     private final ECS ecs;
+    private EntityManager entityManager; // final
     
     private final ComponentGroup group;
     private long systemBit;
@@ -27,17 +28,22 @@ public abstract class EntitySystem {
         this.group = group;
 
     }
+
+    protected void revalidate(Entity e) {
+
+    }
     
 
     protected void initialize() {
 
     }
 
-    public final void process() {
+    public final void update() {
         if (activated) {
-            preProcess();
-            processEntities();
-            postProcess();
+            begin();
+            process();
+            entityManager.clean();
+            end();
         }
     }
 
@@ -45,15 +51,15 @@ public abstract class EntitySystem {
 
     }
 
-    protected void preProcess() {
+    protected void begin() {
 
     }
 
-    protected void processEntities() {
+    protected void process() {
 
     }
 
-    protected void postProcess() {
+    protected void end() {
 
     }
     
@@ -73,19 +79,11 @@ public abstract class EntitySystem {
 
     }
 
-    private void enableEntity(Entity e) {
-
-    }
-
-    private void disableEntity(Entity e) {
-
-    }
-
     protected void setSystemBit(long bit) {
         this.systemBit = bit;
     }
 
-    public long getSystemBit() {
+    protected long getSystemBit() {
         return systemBit;
     }
 

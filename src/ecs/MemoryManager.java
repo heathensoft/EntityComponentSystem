@@ -53,9 +53,8 @@ public class MemoryManager {
     private byte timerCount;
     private boolean enabled;
     private int componentsInMemory;
-    private int componentsCreated;
-    private int componentsDestroyed;
-    private int componentsRecycled;
+    private long componentsCreated;
+    private long componentsDestroyed;
     private float memoryUsage;
     private int memoryUsageMB;
     private int refitCount;
@@ -63,23 +62,24 @@ public class MemoryManager {
     private final Iterator<ComponentPool<? extends Component>> poolIterator = new Iterator<>() {
         @Override
         public void next(ComponentPool<? extends Component> pool) {
-            componentsDestroyed += pool.componentsDestroyed();
-            componentsInMemory += pool.componentsInMemory();
-            componentsRecycled += pool.componentsRecycled();
-            componentsCreated += pool.componentsCreated();
+            componentsDestroyed += pool.discarded();
+            componentsInMemory += pool.objectsInMemory();
+            componentsCreated += pool.obtained();
         }
     };
 
-    private final ECS ecs;
+    private final EntityManager entityManager;
+    private final ComponentManager componentManager;
 
-    public MemoryManager(ECS ecs) {
-        this.ecs = ecs;
+    protected MemoryManager(ECS ecs) {
+        if (ecs == null) throw new IllegalStateException("");
+        componentManager = ecs.componentManager;
+        entityManager = ecs.entityManager;
         timers = new short[Long.SIZE];
         Arrays.fill(timers,UP_TO_DATE);
         componentsInMemory = 0;
         componentsCreated = 0;
         componentsDestroyed = 0;
-        componentsRecycled = 0;
         timerCount = 0;
         accumulator = 0;
         refitCount = 0;
@@ -95,10 +95,10 @@ public class MemoryManager {
             accumulator -= TIME_STEP;
             queryRuntimeMemory();
 
-            // Update component statistics from pool info.
+            // Update component statistics from pool info. // do this and sys-out on termination
             if (poolCount() != 0) {
                 Container<ComponentPool<? extends Component>> pools;
-                pools = ecs.componentManager.getPools();
+                pools = componentManager.getPools();
                 resetComponentStats();
                 pools.iterate(poolIterator);
             }
@@ -109,13 +109,13 @@ public class MemoryManager {
                     if (timers[i] != UP_TO_DATE) {
                         if (!containerTimerMaxed(timers[i])) {
                             if (containerTimerMaxed(++timers[i])) {
-                                if (ecs.componentManager.autoFitContainer(i))
+                                if (componentManager.autoFitContainer(i))
                                     refitCount++;
                             }
                         }
                         if (!poolTimerMaxed(timers[i])) {
                             if (poolTimerMaxed(timers[i] += 0x10)) {
-                                if (ecs.componentManager.autoFitPool(i))
+                                if (componentManager.autoFitPool(i))
                                     refitCount++;
                             }
                         }
@@ -155,7 +155,6 @@ public class MemoryManager {
 
     private void resetComponentStats() {
         componentsCreated = 0;
-        componentsRecycled = 0;
         componentsInMemory = 0;
         componentsDestroyed = 0;
     }
@@ -181,35 +180,31 @@ public class MemoryManager {
     }
 
     public int entitiesInPlay() {
-        return 0;
+        return entityManager.entities();
     }
 
-    public int entitiesCreated() {
-        return 0;
+    public long entitiesCreated() {
+        return entityManager.entitiesCreated();
     }
 
     public int entitiesDestroyed() {
-        return 0;
+        return entityManager.entitiesDestroyed();
     }
 
-    public int entitiesRecycled() {
-        return 0;
+    public int entitiesInMemory() {
+        return entityManager.entitiesInMemory();
     }
 
     public int componentInPlay() {
-        return ecs.componentManager.componentCount();
+        return componentManager.componentCount();
     }
 
-    public int componentsCreated() {
+    public long componentsCreated() {
         return componentsCreated;
-    }
+    } // components obtained
 
-    public int componentsDestroyed() {
+    public long componentsDestroyed() {
         return componentsDestroyed;
-    }
-
-    public int componentsRecycled() {
-        return componentsRecycled;
     }
 
     public int componentsInMemory() {
@@ -221,10 +216,8 @@ public class MemoryManager {
     }
 
     public int poolCount() {
-        return ecs.componentManager.poolCount();
+        return componentManager.poolCount();
     }
-
-
 
 
 }

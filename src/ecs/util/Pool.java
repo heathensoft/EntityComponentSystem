@@ -10,8 +10,13 @@ public abstract class Pool<T> {
 
     private int peak;
     private final int max;
-    private int newInstanceCount = 0;
     protected final Container<T> free;
+
+    protected int newInstances = 0;
+    protected int discarded = 0;
+    protected long obtained = 0;
+
+
 
     public Pool(int initialCapacity, int max) {
         free = new Container<>(initialCapacity);
@@ -27,7 +32,7 @@ public abstract class Pool<T> {
         for (int i = 0; i < n; i++)
             free.push(newObject());
         peak = Math.max(peak, size());
-        newInstanceCount += n;
+        newInstances += n;
     }
 
     public boolean fit() {
@@ -40,13 +45,13 @@ public abstract class Pool<T> {
         T object;
         if (size() == 0) {
             object = newObject();
-            newInstanceCount++;
-            onObjectObtained(object,true);
-        }
-        else {
+            newInstances++;
+            obtained(object,true);
+        } else {
             object = free.pop();
-            onObjectObtained(object,false);
+            obtained(object,false);
         }
+        obtained++;
         return object;
     }
 
@@ -55,10 +60,13 @@ public abstract class Pool<T> {
         if (size() < max) {
             free.push(object);
             peak = Math.max(peak, size());
-            onObjectPooled(object);
+            reset(object);
             if (object instanceof Poolable)
                 ((Poolable)object).onPooled();
-        } else onObjectDiscarded(object);
+        } else {
+            discarded++;
+            discard(object);
+        }
     }
 
     // todo: Add equivalent for Collections
@@ -77,10 +85,13 @@ public abstract class Pool<T> {
                 if (object == null) continue;
                 if (size() < max) {
                     freeObjects.push(object);
-                    onObjectPooled(object);
+                    reset(object);
                     if (object instanceof Poolable)
                         ((Poolable)object).onPooled();
-                } else onObjectDiscarded(object);
+                } else {
+                    discarded++;
+                    discard(object);
+                }
             }
         }
         else {
@@ -90,25 +101,45 @@ public abstract class Pool<T> {
                 if (object == null) continue;
                 if (size() < max) {
                     freeObjects.push(object);
-                    onObjectPooled(object);
+                    reset(object);
                     if (object instanceof Poolable)
                         ((Poolable)object).onPooled();
-                } else onObjectDiscarded(object);
+                } else {
+                    discarded++;
+                    discard(object);
+                }
             }
         }
         peak = Math.max(peak, size());
     }
 
-    protected void onObjectPooled(T object) { }
+    /**
+     * Called when an object gets pooled
+     *
+     * @param object the object to be reset
+     */
+    protected void reset(T object) { }
 
-    protected void onObjectDiscarded(T object) { }
+    /**
+     * Called when an object gets discarded
+     *
+     * @param object the object to be discarded
+     */
+    protected void discard(T object) { }
 
-    protected void onObjectObtained(T object, boolean newInstance) { }
+    /**
+     * Called when an object gets obtained
+     *
+     * @param object the object to be obtained
+     * @param newInstance whether the object is a new instance
+     */
+    protected void obtained(T object, boolean newInstance) { }
 
     public void clear(boolean resize) {
         int n = size();
         for (int i = 0; i < n; i++)
-            onObjectDiscarded(free.get(i));
+            discard(free.get(i));
+        discarded += n;
         free.clear();
         if (resize) free.fit(false);
     }
@@ -125,7 +156,19 @@ public abstract class Pool<T> {
         return peak;
     }
 
-    public int newInstancesCreated() {
-        return newInstanceCount;
+    public int newCreated() {
+        return newInstances;
+    }
+
+    public int discarded() {
+        return discarded;
+    }
+
+    public long obtained() {
+        return obtained;
+    }
+
+    public int objectsInMemory() {
+        return newInstances - discarded;
     }
 }

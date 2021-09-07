@@ -1,7 +1,6 @@
 package ecs;
 
 import ecs.util.Container;
-import ecs.util.Pool;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +32,10 @@ import java.util.Map;
 
 public class ComponentManager {
 
-    // todo: remember to pool components that needs pooling (removal)
-    //  I think poolTimers can be managed by the pool itself
-
     private final MemoryManager memoryManager;
 
-    private final Map<Class<? extends Component>,ComponentType> types;
+    private final Map<Class<? extends Component>,ComponentType> typeMap;
+    private final Container<ComponentType> typesById;
     private long nextFlag = 1L;
     private byte genTypeID = 0;
 
@@ -53,42 +50,107 @@ public class ComponentManager {
     private int componentCount = 0;
 
     protected ComponentManager(MemoryManager memoryManager) {
-        types = new HashMap<>();
+        typeMap = new HashMap<>();
         groups = new Container<>();
         components = new Container<>(9); // 9 will eventually hit 64 (Max) on resizing
+        typesById = new Container<>(9);
         pools = new Container<>(9);
         this.memoryManager = memoryManager;
     }
 
-    public <T extends Component> void addPool(ComponentPool<T> pool, Class<T> clazz) {
+    protected void terminate() {
+
+        pools.iterate(pool -> pool.clear(false));
+        pools.clear();
+        components.iterate(Container::clear);
+        components.clear();
+        groups.clear();
+        typeMap.clear();
+
+
+    }
+
+    protected  <T extends Component> void registerPool(ComponentPool<T> pool, Class<T> clazz) {
         ComponentType type = getType(clazz);
-        if (poolExist(type))
+        if (poolRegistered(type))
             throw new IllegalStateException("Duplicate pool");
         occupyPoolSlot(type);
         pool.register(memoryManager,type);
         pools.set(pool,type.id);
     }
 
-    // returns if a component needs to be refreshed
-    // does not need to notify the memoryManager if it replaced another component
+    /**
+     * Any replaced component get pooled if pool is registered for type.
+     *
+     * @param e the entity
+     * @param c the component to be added to entity
+     * @return whether another component of same type as c was replaced by c
+     */
     protected boolean addComponent(Entity e, Component c) {
+        if (c == null) throw new IllegalStateException("Component cannot be null");
         boolean replaced;
         ComponentType type = getType(c.getClass());
         if (e.hasComponent(type.flag)) {
             Component removed = removeComponentFromContainer(e.id,type.id);
             if (removed == null) throw new IllegalStateException("Component should not be null atp");
-            if (poolExist(type)) // if pool is registered for component type;
+            if (poolRegistered(type)) // if pool is registered and receives components of c's type;
                 pools.get(type.id).freeInternal(c);
             replaced = true;
         } else {
             replaced = false;
             e.addComponent(type.flag);
-            e.enableComponent(type.flag);
             memoryManager.resetContainerTimer(type.id);
-            componentCount++; // remember to decrease on removal
+            componentCount++;
         }
         components.get(type.id).set(c,e.id);
         return replaced;
+    }
+
+    protected void removeAll(Entity e) {
+        Container<Component> componentsByType;
+        Component component;
+        e.setComponents(0);
+        for (int i = 0; i < uniqueTypes(); i++) {
+            componentsByType = components.get(i);
+            if (e.id < componentsByType.usedSpace()) {
+                component = componentsByType.remove(e.id);
+                if (component != null) {
+                    componentCount--;
+                    ComponentType type = typesById.get(i);
+                    memoryManager.resetContainerTimer(type.id);
+                    if (poolRegistered(type))
+                        pools.get(type.id).freeInternal(component);
+                }
+            }
+        }
+    }
+
+    protected boolean removeComponent(Entity e, ComponentType t) {
+        if (!e.hasComponent(t.flag)) return false;
+        Component c = removeComponentFromContainer(e.id,t.id);
+        if (c == null)
+            throw new IllegalStateException("Component should not be null atp");
+        e.removeComponent(t.flag);
+        if (poolRegistered(t))
+            pools.get(t.id).freeInternal(c);
+        memoryManager.resetContainerTimer(t.id);
+        componentCount--;
+        return true;
+    }
+
+    /**
+     * Removes a Component of the same type as c from the entity.
+     * What matters is the type of c. It does not check for equals.
+     * It could remove another component entirely (of the same type) than the passed in c.
+     *
+     * Removed components get pooled if pool registered for type.
+     *
+     * @param e the entity
+     * @param c the component to be removed (Only the type of c matters)
+     * @return whether a component was removed
+     */
+    protected boolean removeComponent(Entity e, Component c) {
+        return removeComponent(e,getType(c.getClass()));
     }
 
     private Component removeComponentFromContainer(int entityID, byte typeID) {
@@ -98,51 +160,36 @@ public class ComponentManager {
         return null;
     }
 
-    protected Component removeComponent(Entity e, ComponentType t) {
-        Container<Component> container = components.get(t.id);
-        Component c = null;
-        int index = e.id;
-        if (index < container.usedSpace()){
-            c = container.remove(index);
-            if (c != null) memoryManager.resetContainerTimer(t.id);
-        }return c;
-    }
-
-    // presuppose the entity has a component of this type
-    protected Component removeComponentUnsafe(Entity e, ComponentType t) {
-        memoryManager.resetContainerTimer(t.id);
-        return components.get(t.id).remove(e.id);
-    }
-
+    /**
+     * Unsafe. Does not check for index outOfBounds.
+     * see: ecs.Getter.java. The only class that use this.
+     * public equivalent: getComponent()
+     *
+     * @param e the entity
+     * @param t the type
+     * @return the component
+     */
     protected Component getComponentUnsafe(Entity e, ComponentType t) {
         return components.get(t.id).get(e.id);
     }
 
-    protected Component getComponentUnsafe(int entity, byte type) {
-        return components.get(type).get(entity);
-    }
-
     public Component getComponent(Entity e, ComponentType t) {
         Container<Component> container = components.get(t.id);
-        int index = e.id; // can remove index when id is protected
-        if (index < container.usedSpace())
-            return container.get(index);
+        if (e.id < container.usedSpace())
+            return container.get(e.id);
         return null;
     }
 
-    public long getTypeFlag(Component c) {
-        return getType(c.getClass()).flag();
-    }
-
     public ComponentType getType(Class<? extends Component> c) {
-        ComponentType type = types.get(c);
+        ComponentType type = typeMap.get(c);
         if (type == null) {
             if (uniqueTypes() == Long.SIZE)
                 throw new IllegalStateException("limit break: maximum unique component-types");
             type = new ComponentType(c,nextFlag,genTypeID);
             nextFlag = nextFlag << 1;
             genTypeID++;
-            types.put(c,type);
+            typeMap.put(c,type);
+            typesById.push(type);
             components.push(new Container<>());
             memoryManager.newTimer();
         }return type;
@@ -170,7 +217,7 @@ public class ComponentManager {
     }
 
     public int uniqueTypes() {
-        return types.size();
+        return typeMap.size();
     }
 
     public int uniqueGroups() {
@@ -205,7 +252,7 @@ public class ComponentManager {
         }return group;
     }
 
-    private boolean poolExist(ComponentType type) {
+    public boolean poolRegistered(ComponentType type) {
         return (poolFlags & type.flag) == type.flag;
     }
 

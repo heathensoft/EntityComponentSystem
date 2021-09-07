@@ -13,20 +13,21 @@ import ecs.util.KVShared;
 public class Entity extends KVShared {
 
     protected final int id;
-    private long systems = 0L;
-    private long components = 0L;
-    private long enabledComponents = 0L;
-    protected boolean enabled = true;
-    protected boolean dirty = false;
+    private long systems;
+    private long components;
+    protected boolean enabled;
+    protected boolean dirty;
 
-    protected Entity( int id) { this.id = id; }
+    protected Entity( int id) {
+        this.id = id;
+        reset();
+    }
 
     public void reset() {
         enabled = true;
         dirty = false;
         systems = 0L;
         components = 0L;
-        enabledComponents = 0L;
     }
 
     public int id() {
@@ -40,6 +41,15 @@ public class Entity extends KVShared {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public long systemCount() {
+        return Long.bitCount(systems);
+    }
+
+    public long componentCount() {
+        return Long.bitCount(components);
+    }
+
 
     protected long systems() {
         return systems;
@@ -65,6 +75,10 @@ public class Entity extends KVShared {
         return components;
     }
 
+    protected boolean hasAnyComponent() {
+        return components > 0;
+    }
+
     protected boolean hasComponent(long bit) {
         return (components & bit) == bit;
     }
@@ -79,26 +93,6 @@ public class Entity extends KVShared {
     
     protected void removeComponent(long bit) {
         components &= ~bit;
-    }
-
-    protected long enabledComponents() {
-        return enabledComponents;
-    }
-
-    protected boolean isComponentEnabled(long bit) {
-        return (enabledComponents & bit) == bit;
-    }
-
-    protected void enableComponent(long bit) {
-        enabledComponents |= bit;
-    }
-
-    protected void setEnabledComponents(long bits) {
-        enabledComponents = bits;
-    }
-
-    protected void disableComponent(long bit) {
-        enabledComponents &= ~bit;
     }
 
     @Override
