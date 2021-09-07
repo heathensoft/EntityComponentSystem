@@ -9,25 +9,35 @@ import ecs.util.Container;
  */
 
 
-public class EntityManager {
+public class EntityManager extends ECSManager{
 
-    private final ComponentManager componentManager;
-    private final SystemManager systemManager;
+    private ComponentManager componentManager;
+    private SystemManager systemManager;
 
     private final Container<Entity> entities;
     private final Container<Entity> dirty;
     private final EntityPool pool;
 
 
-    protected EntityManager(ECS ecs, int initialCapacity, int maxPoolSize) {
-        if (ecs == null) throw new IllegalStateException("");
-        componentManager = ecs.componentManager;
-        systemManager = ecs.systemManager;
+    protected EntityManager(int initialCapacity, int maxPoolSize) {
         entities = new Container<>(initialCapacity);
         dirty = new Container<>(initialCapacity);
         pool = new EntityPool(initialCapacity,maxPoolSize);
         pool.fill(initialCapacity/2);
     }
+
+    @Override
+    protected void set(ECS ecs) {
+        this.componentManager = ecs.componentManager;
+        this.systemManager = ecs.systemManager;
+    }
+
+
+    @Override
+    protected void terminate() {
+
+    }
+
 
     public Entity create() {
         Entity e = pool.obtain();

@@ -41,7 +41,7 @@ import java.util.Arrays;
  */
 
 
-public class MemoryManager {
+public class MemoryManager extends ECSManager{
 
     private static final short TIME_STEP            = 0x14;
     private static final short CONTAINER_CHECKED    = 0x0F;
@@ -68,15 +68,11 @@ public class MemoryManager {
         }
     };
 
-    private final EntityManager entityManager;
-    private final ComponentManager componentManager;
+    private EntityManager entityManager;
+    private ComponentManager componentManager;
 
-    protected MemoryManager(ECS ecs) {
-        if (ecs == null) throw new IllegalStateException("");
-        componentManager = ecs.componentManager;
-        entityManager = ecs.entityManager;
+    protected MemoryManager() {
         timers = new short[Long.SIZE];
-        Arrays.fill(timers,UP_TO_DATE);
         componentsInMemory = 0;
         componentsCreated = 0;
         componentsDestroyed = 0;
@@ -84,7 +80,23 @@ public class MemoryManager {
         accumulator = 0;
         refitCount = 0;
         enabled = true;
+    }
+
+    @Override
+    protected void set(ECS ecs) {
+        this.entityManager = ecs.entityManager;
+        this.componentManager = ecs.componentManager;
+    }
+
+    @Override
+    protected void initialize() {
+        Arrays.fill(timers,UP_TO_DATE);
         queryRuntimeMemory();
+    }
+
+    @Override
+    protected void terminate() {
+
     }
 
     protected void update(float dt) {
@@ -218,6 +230,5 @@ public class MemoryManager {
     public int poolCount() {
         return componentManager.poolCount();
     }
-
 
 }

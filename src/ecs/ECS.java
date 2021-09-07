@@ -1,8 +1,5 @@
 package ecs;
 
-import ecs.util.Container;
-import ecs.util.Iterator;
-
 /**
  * @author Frederik Dahl
  * 01/09/2021
@@ -11,20 +8,36 @@ import ecs.util.Iterator;
 
 public class ECS {
 
-    public ComponentManager componentManager; // protected final
-    public SystemManager systemManager; // protected final
-    public EntityManager entityManager; // protected final
-    public MemoryManager memoryManager; // protected final
+    protected final ComponentManager componentManager;
+    protected final SystemManager systemManager;
+    protected final EntityManager entityManager;
+    protected final MemoryManager memoryManager;
 
     private boolean initialized;
 
-    public ECS() {
+    public ECS(int initialCapacity, int maxPoolSize) {
 
+        componentManager = new ComponentManager();
+        entityManager = new EntityManager(initialCapacity,maxPoolSize);
+        memoryManager = new MemoryManager();
+        systemManager = new SystemManager();
+
+        componentManager.set(this);
+        entityManager.set(this);
+        memoryManager.set(this);
+        systemManager.set(this);
     }
 
     public void initialize() {
+        if (!initialized) {
+            systemManager.initialize();
+            memoryManager.initialize();
+            initialized = true;
+        }
+    }
 
-        initialized = true;
+    public void update(float dt) {
+
     }
 
     public void registerSystem(EntitySystem system) {
@@ -39,8 +52,27 @@ public class ECS {
 
     public void terminate() {
 
-
+        componentManager.terminate();
+        systemManager.terminate();
+        entityManager.terminate();
+        memoryManager.terminate();
 
         System.gc();
+    }
+
+    public MemoryManager getMemoryManager() {
+        return memoryManager;
+    }
+
+    public ComponentManager getComponentManager() {
+        return componentManager;
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    public SystemManager getSystemManager() {
+        return systemManager;
     }
 }

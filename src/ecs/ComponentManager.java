@@ -30,9 +30,9 @@ import java.util.Map;
  */
 
 
-public class ComponentManager {
+public class ComponentManager extends ECSManager{
 
-    private final MemoryManager memoryManager;
+    private MemoryManager memoryManager;
 
     private final Map<Class<? extends Component>,ComponentType> typeMap;
     private final Container<ComponentType> typesById;
@@ -49,15 +49,20 @@ public class ComponentManager {
 
     private int componentCount = 0;
 
-    protected ComponentManager(MemoryManager memoryManager) {
+    protected ComponentManager() {
         typeMap = new HashMap<>();
         groups = new Container<>();
         components = new Container<>(9); // 9 will eventually hit 64 (Max) on resizing
         typesById = new Container<>(9);
         pools = new Container<>(9);
-        this.memoryManager = memoryManager;
     }
 
+    @Override
+    protected void set(ECS ecs) {
+        this.memoryManager = ecs.memoryManager;
+    }
+
+    @Override
     protected void terminate() {
 
         pools.iterate(pool -> pool.clear(false));

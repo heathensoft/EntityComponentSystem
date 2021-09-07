@@ -13,8 +13,8 @@ import ecs.util.KVShared;
 public class Entity extends KVShared {
 
     protected final int id;
-    private long systems;
-    private long components;
+    protected long systems;
+    protected long components;
     protected boolean enabled;
     protected boolean dirty;
 

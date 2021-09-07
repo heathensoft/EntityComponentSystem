@@ -11,27 +11,47 @@ import java.util.Map;
  */
 
 
-public class SystemManager {
+public class SystemManager extends ECSManager{
 
     private final Map<Class<? extends EntitySystem>, Long> systemBits;
     private final Map<Class<? extends EntitySystem>, EntitySystem> systemsMap;
     protected final Container<EntitySystem> systems;
     private int bitGen = 0;
 
+    private EntityManager entityManager;
 
-    public SystemManager() {
+    protected SystemManager() {
         systems = new Container<>(Long.SIZE);
         systemsMap = new HashMap<>();
         systemBits = new HashMap<>();
     }
 
+    @Override
+    protected void set(ECS ecs) {
+        this.entityManager = ecs.entityManager;
+    }
+
+    @Override
+    protected void initialize() {
+        systems.fit(true);
+        systems.iterate(EntitySystem::initialize);
+    }
+
+    @Override
+    protected void terminate() {
+        systems.iterate(EntitySystem::terminate);
+        systems.clear();
+        systemsMap.clear();
+    }
+
     protected void register(EntitySystem system) {
-        if (system == null) throw new IllegalStateException("attempt to register null System");
+        if (system == null) throw new IllegalStateException("attempted to register null System");
         Class<? extends EntitySystem> c = system.getClass();
         if (systemsMap.get(c) == null) {
+            system.setSystemBit(getBit(c));
+            system.set(entityManager);
             systems.push(system);
             systemsMap.put(c,system);
-            system.setSystemBit(getBit(c));
         }
     }
 
@@ -39,16 +59,6 @@ public class SystemManager {
         return c.cast(systemsMap.get(c));
     }
 
-    protected void initialize() { // called in ECS init
-            systems.fit(true);
-            systems.iterate(EntitySystem::initialize);
-    }
-
-    protected void terminate() {
-        systems.iterate(EntitySystem::terminate);
-        systems.clear();
-        systemsMap.clear();
-    }
 
     protected long getBit(Class<? extends EntitySystem> c) {
         Long flag = systemBits.get(c);

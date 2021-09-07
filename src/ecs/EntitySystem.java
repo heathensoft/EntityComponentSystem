@@ -1,7 +1,10 @@
 package ecs;
 
 
+import ecs.util.KVArray;
+
 /**
+ *
  * @author Frederik Dahl
  * 20/08/2021
  */
@@ -10,26 +13,34 @@ package ecs;
 public abstract class EntitySystem {
     
 
-    private final ECS ecs;
-    private EntityManager entityManager; // final
-    
+    private EntityManager entityManager;
+    private final KVArray<Entity> entities;
     private final ComponentGroup group;
     private long systemBit;
     private boolean activated;
-    
-    
-    @SafeVarargs
-    public EntitySystem(ECS ecs, Class<? extends Component>... types) {
-        this(ecs,ecs.componentManager.getGroup(types));
-    }
-    
-    public EntitySystem(ECS ecs, ComponentGroup group) {
-        this.ecs = ecs;
+
+
+    public EntitySystem(ComponentGroup group, int initialCapacity) {
+        entities = new KVArray<>(initialCapacity);
         this.group = group;
 
     }
 
+    protected void set(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
     protected void revalidate(Entity e) {
+
+        boolean contains = entities.contains(e); // this should be fast. could replace with
+        boolean hasComponents = group.containsAll(e.components);
+        boolean enabled = e.enabled;
+
+        if (contains && hasComponents) {
+            if (enabled) return;
+            removeEntity(e);
+        }
+
 
     }
     
@@ -55,9 +66,8 @@ public abstract class EntitySystem {
 
     }
 
-    protected void process() {
+    protected abstract void process();
 
-    }
 
     protected void end() {
 
