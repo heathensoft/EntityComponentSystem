@@ -26,22 +26,28 @@ public abstract class EntitySystem {
 
     }
 
-    protected void set(EntityManager entityManager) {
+    protected final void set(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
-    protected void revalidate(Entity e) {
+    protected final void revalidate(Entity e) {
+        final boolean inSystem = e.inSystem(systemBit);
+        final boolean hasComponents = group.containsAll(e.components);
+        if (e.enabled) {
+            if (inSystem && hasComponents) return;
+            if (!inSystem && hasComponents) addEntity(e);
+            else if (inSystem) removeEntity(e); // !hasComponents == true atp
+        } else if (inSystem) removeEntity(e);
+    }
 
-        boolean contains = entities.contains(e); // this should be fast. could replace with
-        boolean hasComponents = group.containsAll(e.components);
-        boolean enabled = e.enabled;
+    private void addEntity(Entity e) {
+        e.addSystem(systemBit);
+        entities.add(e);
+    }
 
-        if (contains && hasComponents) {
-            if (enabled) return;
-            removeEntity(e);
-        }
-
-
+    private void removeEntity(Entity e) {
+        e.removeSystem(systemBit);
+        entities.remove(e);
     }
     
 
@@ -79,14 +85,6 @@ public abstract class EntitySystem {
 
     public void deactivate() {
         activated = false;
-    }
-
-    private void addEntity(Entity e) {
-
-    }
-
-    private void removeEntity(Entity e) {
-
     }
 
     protected void setSystemBit(long bit) {
