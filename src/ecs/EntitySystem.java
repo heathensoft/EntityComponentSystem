@@ -13,17 +13,16 @@ import ecs.util.KVArray;
 public abstract class EntitySystem {
     
 
-    private EntityManager entityManager;
-    private final KVArray<Entity> entities;
-    private final ComponentGroup group;
-    private long systemBit;
-    private boolean activated;
+    protected EntityManager entityManager;
+    protected final KVArray<Entity> entities;
+    protected final ComponentGroup group;
+    protected long systemBit;
+    protected boolean activated;
 
 
     public EntitySystem(ComponentGroup group, int initialCapacity) {
         entities = new KVArray<>(initialCapacity);
         this.group = group;
-
     }
 
     protected final void set(EntityManager entityManager) {
@@ -47,7 +46,7 @@ public abstract class EntitySystem {
 
     private void removeEntity(Entity e) {
         e.removeSystem(systemBit);
-        entities.remove(e);
+        entities.remove(e); // O(1) removal
     }
     
 
