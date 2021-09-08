@@ -37,7 +37,7 @@ public class ECS {
     }
 
     public void update(float dt) {
-
+        memoryManager.update(dt);
     }
 
     public void registerSystem(EntitySystem system) {
@@ -50,14 +50,32 @@ public class ECS {
         componentManager.registerPool(pool,clazz);
     }
 
+    /**
+     * Terminates the ECS. Do not terminate directly from inside an EntitySystem update().
+     * If necessary, use a flag. i.e. shouldTerminate = true.
+     *
+     * Termination is done systematically, followed by a call to gc().
+     *
+     * 1. Removes all components from entities.
+     * 2. Cleaning / revalidating all entities, removing them from all systems.
+     * 3. Deletes all entities from the EntityManager.
+     * 4. MemoryManager prints lifecycle stats.
+     * 5. Terminates all managers.
+     *      Clears pools and containers.
+     *      Nullifying of references.
+     * 6. Garbage Collection
+     *
+     */
     public void terminate() {
 
-        componentManager.terminate();
+        memoryManager.printStatistics();
         systemManager.terminate();
         entityManager.terminate();
-        memoryManager.terminate();
 
-        System.gc();
+        componentManager.terminate();
+        memoryManager.terminate();
+        memoryManager.printStatistics();
+        System.gc(); // The only place the ECS invokes gc()
     }
 
     public MemoryManager getMemoryManager() {

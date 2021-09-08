@@ -14,7 +14,7 @@ public class EntityManager extends ECSManager{
     private ComponentManager componentManager;
     private SystemManager systemManager;
 
-    private final Container<Entity> entities;
+    protected final Container<Entity> entities;
     private final Container<Entity> dirty;
     private final EntityPool pool;
 
@@ -35,7 +35,13 @@ public class EntityManager extends ECSManager{
 
     @Override
     protected void terminate() {
-
+        entities.iterate(this::remove);
+        clean();
+        // entities and dirty should be empty atp.
+        // so should all the systems' KVArrays
+        if (entities.notEmpty() || dirty.notEmpty())
+            throw new IllegalStateException("Temporary");
+        pool.clear(false);
     }
 
 

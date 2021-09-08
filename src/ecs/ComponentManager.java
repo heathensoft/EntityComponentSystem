@@ -47,7 +47,10 @@ public class ComponentManager extends ECSManager{
     private final Container<ComponentPool<? extends Component>> pools;
     private long poolFlags = 0L;
 
-    private int componentCount = 0;
+    private int componentCount = 0;         // components in play
+    private long componentsAdded = 0L;      // total number of components added
+    private long componentsRemoved = 0L;    // total number of components removed
+    private long componentsDiscarded = 0L;  // total number of components removed and NOT returned to a pool
 
     protected ComponentManager() {
         typeMap = new HashMap<>();
@@ -138,6 +141,7 @@ public class ComponentManager extends ECSManager{
         e.removeComponent(t.flag);
         if (poolRegistered(t))
             pools.get(t.id).freeInternal(c);
+        else
         memoryManager.resetContainerTimer(t.id);
         componentCount--;
         return true;

@@ -52,14 +52,15 @@ public class MemoryManager extends ECSManager{
     private float accumulator;
     private byte timerCount;
     private boolean enabled;
-    private int componentsInMemory;
-    private long componentsCreated;
-    private long componentsDestroyed;
+    private boolean debug;
+    private int componentsInMemory; // rethink this. this should be total objects in pools (the sum of pools sizes) this + components in play should be the memory
+    private long componentsCreated; // this should be total components obtained from pools (and it is)
+    private long componentsDestroyed; // components discarded from pools
     private float memoryUsage;
     private int memoryUsageMB;
     private int refitCount;
 
-    private final Iterator<ComponentPool<? extends Component>> poolIterator = new Iterator<>() {
+    private final Iterator<ComponentPool<? extends Component>> poolItr = new Iterator<>() {
         @Override
         public void next(ComponentPool<? extends Component> pool) {
             componentsDestroyed += pool.discarded();
@@ -80,6 +81,7 @@ public class MemoryManager extends ECSManager{
         accumulator = 0;
         refitCount = 0;
         enabled = true;
+        debug = false;
     }
 
     @Override
@@ -98,23 +100,23 @@ public class MemoryManager extends ECSManager{
     protected void terminate() {
 
     }
+    // Figure out how many components were obtained by pools and created elsewhere
+    public void printStatistics() {
+        queryPoolStatistics();
+
+    }
 
     protected void update(float dt) {
-
-        accumulator += dt;
-        // 20 second time-interval
+        accumulator += dt;// 20 second time-interval
         if (accumulator > TIME_STEP) {
             accumulator -= TIME_STEP;
             queryRuntimeMemory();
-
-            // Update component statistics from pool info. // do this and sys-out on termination
-            if (poolCount() != 0) {
-                Container<ComponentPool<? extends Component>> pools;
-                pools = componentManager.getPools();
-                resetComponentStats();
-                pools.iterate(poolIterator);
+            // collect component statistics from pools.
+            if (poolCount() != 0) queryPoolStatistics();
+            if (debug) {
+                // print stats for every 5 minutes
+                // also do math.max to get high entity count etc.
             }
-
             // check inactive component pools and containers
             if (enabled) {
                 for (byte i = 0; i < timerCount; i++) {
@@ -122,10 +124,8 @@ public class MemoryManager extends ECSManager{
                         if (!containerTimerMaxed(timers[i])) {
                             if (containerTimerMaxed(++timers[i])) {
                                 if (componentManager.autoFitContainer(i))
-                                    refitCount++;
-                            }
-                        }
-                        if (!poolTimerMaxed(timers[i])) {
+                                    refitCount++;}
+                        }if (!poolTimerMaxed(timers[i])) {
                             if (poolTimerMaxed(timers[i] += 0x10)) {
                                 if (componentManager.autoFitPool(i))
                                     refitCount++;
@@ -139,6 +139,10 @@ public class MemoryManager extends ECSManager{
 
     protected void newTimer() {
         timerCount++;
+    }
+
+    protected void addToDiscarded() {
+
     }
 
     protected void resetContainerTimer(byte index) {
@@ -165,10 +169,13 @@ public class MemoryManager extends ECSManager{
         memoryUsageMB = total - free;
     }
 
-    private void resetComponentStats() {
+    private void queryPoolStatistics() {
+        Container<ComponentPool<? extends Component>> pools;
+        pools = componentManager.getPools();
         componentsCreated = 0;
         componentsInMemory = 0;
         componentsDestroyed = 0;
+        pools.iterate(poolItr);
     }
 
     public void enable() {
@@ -177,6 +184,10 @@ public class MemoryManager extends ECSManager{
 
     public void disable() {
         enabled = false;
+    }
+
+    public void toggleDebug(boolean on) {
+        debug = on;
     }
 
     public boolean isEnabled() {

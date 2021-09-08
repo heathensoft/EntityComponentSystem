@@ -5,11 +5,9 @@ package ecs;
  *
  * Empty slate. Marker-interface
  *
- * It's supposed to be a functionless struct of data.
+ * A component is ideally just a struct of data. EntitySystems should provide all the functionality.
  * When linked to an Entity, EntitySystems that are interested will add the entity to itself.
  *
- * EntitySystems provides all functionality:
- * i.e. foreach entity -> move(entity)
  *
  * Use of ComponentPool:
  * To register a pool in the system: ecs.componentManager.addPool(thePool,clazz);
