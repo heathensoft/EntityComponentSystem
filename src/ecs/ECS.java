@@ -1,6 +1,8 @@
 package ecs;
 
 /**
+ *
+ *
  * @author Frederik Dahl
  * 01/09/2021
  */
@@ -8,10 +10,14 @@ package ecs;
 
 public class ECS {
 
+    // todo:
+    // Could eventually also manage threads for Systems. Some Runnable-provider Manager
+    // Diagnostics has its own thread. I can see AI-Systems / pathfinding using concurrency
+
     protected final ComponentManager componentManager;
     protected final SystemManager systemManager;
     protected final EntityManager entityManager;
-    protected final MemoryManager memoryManager;
+    protected final MemoryManagerOld memoryManager;
 
     private boolean initialized;
 
@@ -19,7 +25,7 @@ public class ECS {
 
         componentManager = new ComponentManager();
         entityManager = new EntityManager(initialCapacity,maxPoolSize);
-        memoryManager = new MemoryManager();
+        memoryManager = new MemoryManagerOld();
         systemManager = new SystemManager();
 
         componentManager.set(this);
@@ -78,7 +84,7 @@ public class ECS {
         System.gc(); // The only place the ECS invokes gc()
     }
 
-    public MemoryManager getMemoryManager() {
+    public MemoryManagerOld getMemoryManager() {
         return memoryManager;
     }
 

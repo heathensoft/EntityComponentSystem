@@ -168,6 +168,14 @@ public abstract class Pool<T> {
         return obtained;
     }
 
+    public int capacity() {
+        return free.capacity();
+    }
+
+    public float loadFactor() {
+        return free.loadFactor();
+    }
+
     public int objectsInMemory() {
         return newInstances - discarded;
     }

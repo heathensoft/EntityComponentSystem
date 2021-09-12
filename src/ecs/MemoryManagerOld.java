@@ -41,7 +41,7 @@ import java.util.Arrays;
  */
 
 
-public class MemoryManager extends ECSManager{
+public class MemoryManagerOld extends ECSManager{
 
     private static final short TIME_STEP            = 0x14;
     private static final short CONTAINER_CHECKED    = 0x0F;
@@ -72,7 +72,7 @@ public class MemoryManager extends ECSManager{
     private EntityManager entityManager;
     private ComponentManager componentManager;
 
-    protected MemoryManager() {
+    protected MemoryManagerOld() {
         timers = new short[Long.SIZE];
         componentsInMemory = 0;
         componentsCreated = 0;
@@ -139,10 +139,6 @@ public class MemoryManager extends ECSManager{
 
     protected void newTimer() {
         timerCount++;
-    }
-
-    protected void addToDiscarded() {
-
     }
 
     protected void resetContainerTimer(byte index) {

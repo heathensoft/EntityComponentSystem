@@ -1,4 +1,4 @@
-package ecs.util.debug;
+package ecs.util;
 
 
 import java.util.LinkedList;

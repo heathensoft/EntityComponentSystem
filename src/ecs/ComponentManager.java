@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class ComponentManager extends ECSManager{
 
-    private MemoryManager memoryManager;
+    private MemoryManagerOld memoryManager;
 
     private final Map<Class<? extends Component>,ComponentType> typeMap;
     private final Container<ComponentType> typesById;

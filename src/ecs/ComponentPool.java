@@ -33,14 +33,14 @@ import ecs.util.Pool;
 
 public abstract class ComponentPool<T extends Component> extends Pool<T> {
 
-    protected MemoryManager memoryManager;
+    protected MemoryManagerOld memoryManager;
     protected ComponentType componentType;
 
     public ComponentPool(int initialCapacity) {
         super(initialCapacity);
     }
 
-    protected void register(MemoryManager memoryManager, ComponentType componentType) {
+    protected void register(MemoryManagerOld memoryManager, ComponentType componentType) {
         this.memoryManager = memoryManager;
         this.componentType = componentType;
     }

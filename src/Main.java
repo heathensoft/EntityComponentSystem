@@ -1,5 +1,6 @@
 import ecs.util.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -145,6 +146,49 @@ public class Main {
     
     public static void main(String[] args) {
 
+        /*
+        String s = File.separator;
+        File directory = new File("ecs"+s+"diagnostics");
+        final StringBuilder filename = new StringBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMddHHmm");
+        filename.append(directory).append(s).append("ECS-D_").append(LocalDateTime.now().format(formatter)).append(".csv");
+        System.out.println(filename);
+        System.out.println("\"");
 
+         */
+
+
+
+        try {
+            writer = new CSVWriter(FileUtils.internal(false, "data.csv", "log"),
+                    "Data",
+                    "Metrics",
+                    "Viable");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+
+        writer.write();
+
+        writer.newEntry(1,2,3);
+        writer.newEntry(5,2,3);
+        writer.newEntry(5,2,3);
+        writer.newEntry(5,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+        writer.newEntry(1,2,3);
+
+        writer.write();
     }
+
+    public static CSVWriter writer;
 }
