@@ -1,7 +1,10 @@
 
 ## Entity Component System
 
-This is a module for a game engine I am working on. The module is still under development.
+Under development.
+
+This is a module for a game engine I am working on:
+<a href="https://github.com/fre-dahl/Nudge">Nudge</a>
 
 
 There are more than a few ways to design an ECS. And being written in Java, you can't really
@@ -10,7 +13,7 @@ Where you could keep components tightly stacked next to each other i memory, to 
 
 Even without this control, it still makes creating elements for interactive applications more manageable.
 Instead of inheritance you have "entities" with components.
-.ie if you want your entity to be able to fly, you might give it the flying component.
+If you want your entity to be able to fly, you might give it the flying component.
 The flying component could have a layout like this:
 
 
@@ -21,8 +24,8 @@ public class Flying implements Component
 
 
 When adding a component, the entity (basically an id) will be added to systems that are interested
-in flying components. Components are data and systems process data.
-.ie a rendering system might need a Sprite component and a Transform component.
+in flying components. Components are data and systems process that data.
+A rendering system might need a Sprite component and a Transform component.
 Any entity meeting those requirements will be added to the system.
 It does not matter what abstractions you impose on an entity. If you add a Flying component to
 a Fish or a UI-button it has the potential to fly. And you can do this at runtime.
@@ -39,10 +42,12 @@ Core design principles:
 
 
 
-### references and inspiration:
+### Recommendations, refs. and inspiration:
 
 
 [Wikipedia](https://en.wikipedia.org/wiki/Entity_component_system)
+
+[They're Not Just For Game Developers](https://www.youtube.com/watch?v=SFKR5rZBu-8&t=1249s&ab_channel=MarsButtfield-Addison)
 
 [A SIMPLE ENTITY COMPONENT SYSTEM (ECS) [C++]](https://austinmorlan.com/posts/entity_component_system/)
 

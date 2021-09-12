@@ -128,6 +128,9 @@ public class ComponentManager extends ECSManager{
                     memoryManager.resetContainerTimer(type.id);
                     if (poolRegistered(type))
                         pools.get(type.id).freeInternal(component);
+                    else {
+                        // increase comps lost
+                    }
                 }
             }
         }
@@ -141,8 +144,12 @@ public class ComponentManager extends ECSManager{
         e.removeComponent(t.flag);
         if (poolRegistered(t))
             pools.get(t.id).freeInternal(c);
-        else
+        else {
+
+            // increase components lost
+        }
         memoryManager.resetContainerTimer(t.id);
+
         componentCount--;
         return true;
     }

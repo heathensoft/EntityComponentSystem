@@ -49,6 +49,10 @@ public abstract class ComponentPool<T extends Component> extends Pool<T> {
         return componentType;
     }
 
+    protected void query(long[] arr) {
+
+    }
+
     @SuppressWarnings("unchecked")
     protected void freeInternal(Component c) {
         free((T)c);

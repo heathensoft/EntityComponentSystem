@@ -13,24 +13,26 @@ public class RunTimeStatistics {
     long componentsObtainedFromPools = 0L;     // components obtained from pools
     long componentsAdded = 0L;                 // components added to entities
     long componentsRemoved = 0L;               // components removed from entities
-    long componentsLost = 0L;                  // components removed and lost reference
+    long componentsLost = 0L;                  // components removed and lost reference. set in comp manager
     long componentsDiscarded = 0L;             // components discarded from pools
 
     int entitiesInPlay = 0;
     int entitiesInPool = 0;
     long entitiesCreated = 0L;
     long entitiesLost = 0L;
-    float entityPoolLoadFactor = 0f; // can calculate stuff like
 
 
     int componentContainerRefits = 0;
     int componentPoolRefits = 0;
-    float componentPoolsLoadFactor = 0f;
 
     int memoryUsageMB = 0;
     float memoryUsagePercent = 0f;
 
 
+
+    protected void intervalUpdate(long[] newTotals) {
+
+    }
 
     public int getComponentsInPlay() {
         return componentsInPlay;

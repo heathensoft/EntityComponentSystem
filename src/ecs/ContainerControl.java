@@ -10,13 +10,11 @@ import java.util.Arrays;
 
 public class ContainerControl {
 
-    private static final short TIME_STEP            = 0x14;
     private static final short CONTAINER_CHECKED    = 0x0F;
     private static final short POOL_CHECKED         = 0xF0;
     private static final short UP_TO_DATE           = 0xFF;
 
     private final short[] timers;
-    private float accumulator;
     private byte timerCount;
 
     private final Memory memory;
@@ -27,19 +25,15 @@ public class ContainerControl {
         this.memory = memory;
     }
 
-    protected void check(float dt) { // could do the accumulation in the memory manager. yes do that
-        accumulator += dt;
-        if (accumulator > TIME_STEP) {
-            accumulator -= TIME_STEP;
-            for (byte i = 0; i < timerCount; i++) {
-                if (timers[i] != UP_TO_DATE) {
-                    if (!containerTimerMaxed(timers[i]))
-                        if (containerTimerMaxed(++timers[i]))
-                            memory.attemptRefitContainer(i);
-                    if (!poolTimerMaxed(timers[i]))
-                        if (poolTimerMaxed(timers[i] += 0x10))
-                            memory.attemptRefitPool(i);
-                }
+    protected void check(float dt) {
+        for (byte i = 0; i < timerCount; i++) {
+            if (timers[i] != UP_TO_DATE) {
+                if (!containerTimerMaxed(timers[i]))
+                    if (containerTimerMaxed(++timers[i]))
+                        memory.attemptRefitContainer(i);
+                if (!poolTimerMaxed(timers[i]))
+                    if (poolTimerMaxed(timers[i] += 0x10))
+                        memory.attemptRefitPool(i);
             }
         }
     }
