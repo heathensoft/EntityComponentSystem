@@ -50,10 +50,15 @@ public class Entity extends KVShared {
         return Long.bitCount(components);
     }
 
-
-    protected long systems() {
+    public long systems() {
         return systems;
     }
+
+    public long components() {
+        return components;
+    }
+
+
 
     protected boolean inSystem(long bit) {
         return (systems & bit) == bit;
@@ -69,10 +74,6 @@ public class Entity extends KVShared {
 
     protected void removeSystem(long bit) {
         systems &= ~bit;
-    }
-
-    protected long components() {
-        return components;
     }
 
     protected boolean hasAnyComponent() {

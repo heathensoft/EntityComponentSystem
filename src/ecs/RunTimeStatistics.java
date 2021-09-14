@@ -5,92 +5,77 @@ package ecs;
  * 09/09/2021
  */
 
+// bør også ha deltaTime.
 
 public class RunTimeStatistics {
 
-    int componentsInPlay = 0;                  // components currently on entities
-    int componentsInPools = 0;                 // components stored in pools
-    long componentsObtainedFromPools = 0L;     // components obtained from pools
-    long componentsAdded = 0L;                 // components added to entities
-    long componentsRemoved = 0L;               // components removed from entities
-    long componentsLost = 0L;                  // components removed and lost reference. set in comp manager
-    long componentsDiscarded = 0L;             // components discarded from pools
 
-    int entitiesInPlay = 0;
-    int entitiesInPool = 0;
-    long entitiesCreated = 0L;
-    long entitiesLost = 0L;
+    private final ECS ecs;
 
-
-    int componentContainerRefits = 0;
-    int componentPoolRefits = 0;
-
-    int memoryUsageMB = 0;
-    float memoryUsagePercent = 0f;
-
-
-
-    protected void intervalUpdate(long[] newTotals) {
-
+    public RunTimeStatistics(ECS ecs) {
+        this.ecs = ecs;
     }
 
-    public int getComponentsInPlay() {
-        return componentsInPlay;
+
+    // add synchronized to methods looping / querying anything. Or at least think it through. where should the sync be etc.
+
+    public int entitiesActive() { return ecs.entityManager.entities(); }
+
+    public long entitiesCreated() { return ecs.entityManager.entitiesCreated(); }
+
+    public long entitiesLost() { return ecs.entityManager.entitiesDestroyed(); }
+
+    public int entitiesInMemory() { return ecs.entityManager.entitiesInMemory(); }
+
+
+    public int componentsActive() { return ecs.componentManager.componentsActive(); }
+
+    public int componentsPooled() { return ecs.componentManager.pools.inPoolTotal(); }
+
+    public int componentsPooled(ComponentType type) { return ecs.componentManager.pools.inPool(type); }
+
+    public long componentsObtained() { return 0; }
+
+    public int componentsObtained(ComponentType type) { return 0; }
+
+    public float componentPoolsLoadFactor() { return 0; }
+
+    public float componentPoolLoadFactor(ComponentType type) { return 0; }
+
+    public float componentContainersLoadFactor() { return 0; }
+
+    public float componentContainerLoadFactor(ComponentType type) { return 0; }
+
+    public long componentsAdded() { return ecs.componentManager.componentsAdded(); }
+
+    public long componentsRemoved() { return ecs.componentManager.componentsRemoved(); }
+
+    public long componentsDiscarded() { return 0; }
+
+    public long componentsDiscarded(ComponentType type) { return ecs.componentManager.pools.discarded(type); }
+
+    public long componentsLost() { return 0; }
+
+    public int componentsInMemory() { return componentsActive() + componentsPooled(); }
+
+    public int componentPools() { return ecs.componentManager.pools.poolCount(); }
+
+    public int poolRefits() { return ecs.componentManager.poolRefits(); }
+
+    public int containerRefits() { return ecs.componentManager.containerRefits(); }
+
+    private int memoryUsageMB() {
+        Runtime runtime = Runtime.getRuntime();
+        int free = (int)(runtime.freeMemory()/1000000L);
+        int total = (int)(runtime.totalMemory()/1000000L);
+        return total - free;
     }
 
-    public int getComponentsInPools() {
-        return componentsInPools;
+    private float memoryUsagePercent() {
+        Runtime runtime = Runtime.getRuntime();
+        int free = (int)(runtime.freeMemory()/1000000L);
+        int total = (int)(runtime.totalMemory()/1000000L);
+        return (float) (Math.round((1 - (float)free / total) * 10000) / 100.0);
     }
 
-    public long getComponentsObtainedFromPools() {
-        return componentsObtainedFromPools;
-    }
-
-    public long getComponentsAdded() {
-        return componentsAdded;
-    }
-
-    public long getComponentsRemoved() {
-        return componentsRemoved;
-    }
-
-    public long getComponentsLost() {
-        return componentsLost;
-    }
-
-    public long getComponentsDiscarded() {
-        return componentsDiscarded;
-    }
-
-    public int getEntitiesInPlay() {
-        return entitiesInPlay;
-    }
-
-    public int getEntitiesInPool() {
-        return entitiesInPool;
-    }
-
-    public long getEntitiesCreated() {
-        return entitiesCreated;
-    }
-
-    public long getEntitiesLost() {
-        return entitiesLost;
-    }
-
-    public int getComponentContainerRefits() {
-        return componentContainerRefits;
-    }
-
-    public int getComponentPoolRefits() {
-        return componentPoolRefits;
-    }
-
-    public int getComponentsInMemory() {
-        return componentsInPools + componentsInPlay;
-    }
-
-    public int getEntitiesInMemory() {
-        return entitiesInPool + entitiesInPlay;
-    }
 }

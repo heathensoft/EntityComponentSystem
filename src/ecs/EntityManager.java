@@ -9,31 +9,25 @@ import ecs.util.Container;
  */
 
 
-public class EntityManager extends ECSManager{
+public class EntityManager {
 
-    private ComponentManager componentManager;
-    private SystemManager systemManager;
+    private final ECS ecs;
 
     protected final Container<Entity> entities;
     private final Container<Entity> dirty;
     private final EntityPool pool;
 
 
-    protected EntityManager(int initialCapacity, int maxPoolSize) {
+    protected EntityManager(ECS ecs, int initialCapacity, int maxPoolSize) {
+        this.ecs = ecs;
         entities = new Container<>(initialCapacity);
         dirty = new Container<>(initialCapacity);
         pool = new EntityPool(initialCapacity,maxPoolSize);
         pool.fill(initialCapacity/2);
     }
 
-    @Override
-    protected void set(ECS ecs) {
-        this.componentManager = ecs.componentManager;
-        this.systemManager = ecs.systemManager;
-    }
 
 
-    @Override
     protected void terminate() {
         entities.iterate(this::remove);
         clean();
@@ -64,30 +58,31 @@ public class EntityManager extends ECSManager{
      */
     public void remove(Entity e) {
         if (e.hasAnyComponent())
-            componentManager.removeAll(e);
+            ecs.componentManager.removeAll(e);
         refresh(e);
     }
 
     public void addComponents(Entity e, Component... components) {
-        boolean refresh = false;
+        boolean shouldRefresh = false;
         for (Component c : components) {
-            if (!componentManager.addComponent(e, c))
-                refresh = true;
-        }if (refresh) refresh(e);
+            if (ecs.componentManager.addComponent(e, c))
+                shouldRefresh = true;
+        }
+        if (shouldRefresh) refresh(e);
     }
 
     public void addComponent(Entity e, Component c) {
-        if (!componentManager.addComponent(e,c)) // if !replaced
+        if (ecs.componentManager.addComponent(e,c))
             refresh(e);
     }
 
     public void removeComponent(Entity e, ComponentType t) {
-        if (componentManager.removeComponent(e,t))
+        if (ecs.componentManager.removeComponent(e,t))
             refresh(e);
     }
 
     public void removeComponent(Entity e, Component c) {
-        if (componentManager.removeComponent(e,c))
+        if (ecs.componentManager.removeComponent(e,c))
             refresh(e);
     }
 
@@ -141,9 +136,9 @@ public class EntityManager extends ECSManager{
      */
     protected void clean() {
         if (dirty.notEmpty()) {
-            Container<EntitySystem> systems = systemManager.systems;
-            int systemCount = systems.itemCount();
-            int dirtyCount = dirty.itemCount();
+            final Container<EntitySystem> systems = ecs.systemManager.systems;
+            final int systemCount = systems.itemCount();
+            final int dirtyCount = dirty.itemCount();
             for (int i = 0; i < dirtyCount; i++) {
                 Entity entity = dirty.get(i);
                 for (int j = 0; j < systemCount; j++)

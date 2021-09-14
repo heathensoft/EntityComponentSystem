@@ -1,7 +1,8 @@
 package ecs;
 
 /**
- * A" component getter" helper class for fast queries of a componentManger's component containers.
+ * A" component getter" helper class for fast queries of ECS component containers.
+ * You can create them in the ESC class
  *
  * @author Frederik Dahl
  * 05/09/2021

@@ -14,36 +14,48 @@ public class ECS {
     // Could eventually also manage threads for Systems. Some Runnable-provider Manager
     // Diagnostics has its own thread. I can see AI-Systems / pathfinding using concurrency
 
+    protected final RunTimeStatistics runTimeStatistics;
     protected final ComponentManager componentManager;
     protected final SystemManager systemManager;
     protected final EntityManager entityManager;
-    protected final MemoryManagerOld memoryManager;
 
+    private Diagnostics diagnostics;
     private boolean initialized;
 
     public ECS(int initialCapacity, int maxPoolSize) {
 
-        componentManager = new ComponentManager();
-        entityManager = new EntityManager(initialCapacity,maxPoolSize);
-        memoryManager = new MemoryManagerOld();
-        systemManager = new SystemManager();
+        runTimeStatistics = new RunTimeStatistics(this);
+        componentManager = new ComponentManager(this);
+        entityManager = new EntityManager(this,initialCapacity,maxPoolSize);
+        systemManager = new SystemManager(this);
 
-        componentManager.set(this);
-        entityManager.set(this);
-        memoryManager.set(this);
-        systemManager.set(this);
     }
 
     public void initialize() {
         if (!initialized) {
-            systemManager.initialize();
-            memoryManager.initialize();
+            systemManager.initializeSystems();
             initialized = true;
         }
     }
 
     public void update(float dt) {
-        memoryManager.update(dt);
+
+
+    }
+
+    public synchronized void runDiagnostics(Diagnostics diagnostics) {
+        if (diagnostics == null)
+            throw new IllegalArgumentException("null argument");
+        if (this.diagnostics != null) {
+            this.diagnostics.stop();
+            try {
+                this.diagnostics.awaitTermination();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        this.diagnostics = diagnostics;
+        new Thread(diagnostics).start();
     }
 
     public void registerSystem(EntitySystem system) {
@@ -55,6 +67,28 @@ public class ECS {
         if (!initialized) throw new IllegalStateException("Register pools before ECS initialization");
         componentManager.registerPool(pool,clazz);
     }
+
+    public <T extends EntitySystem> T getSystem(Class<T> systemClass) {
+        return systemManager.getSystem(systemClass);
+    }
+
+    public ComponentType getType(Class<? extends Component> componentClass) {
+        return componentManager.getType(componentClass);
+    }
+
+    public ComponentGroup getGroup(ComponentType... componentTypes) {
+        return componentManager.getGroup(componentTypes);
+    }
+
+    @SafeVarargs
+    public final ComponentGroup getGroup(Class<? extends Component>... classes) {
+        return componentManager.getGroup(classes);
+    }
+
+    public <T extends Component> Getter<T> newGetter(Class<T> componentClass) {
+        return new Getter<>(componentClass,componentManager);
+    }
+
 
     /**
      * Terminates the ECS. Do not terminate directly from inside an EntitySystem update().
@@ -74,29 +108,35 @@ public class ECS {
      */
     public void terminate() {
 
-        memoryManager.printStatistics();
         systemManager.terminate();
         entityManager.terminate();
 
         componentManager.terminate();
-        memoryManager.terminate();
-        memoryManager.printStatistics();
         System.gc(); // The only place the ECS invokes gc()
     }
 
-    public MemoryManagerOld getMemoryManager() {
-        return memoryManager;
+
+
+    public RunTimeStatistics runTimeStatistics() {
+        return runTimeStatistics;
     }
 
-    public ComponentManager getComponentManager() {
+    public ComponentManager componentManager() {
         return componentManager;
     }
 
-    public EntityManager getEntityManager() {
+    public EntityManager entityManager() {
         return entityManager;
     }
 
-    public SystemManager getSystemManager() {
+    public SystemManager systemManager() {
         return systemManager;
     }
+
+
+    protected boolean isInitialized() {
+        return initialized;
+    }
+
+
 }

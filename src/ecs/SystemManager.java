@@ -11,33 +11,29 @@ import java.util.Map;
  */
 
 
-public class SystemManager extends ECSManager{
+public class SystemManager {
 
     private final Map<Class<? extends EntitySystem>, Long> systemBits;
     private final Map<Class<? extends EntitySystem>, EntitySystem> systemsMap;
     protected final Container<EntitySystem> systems;
     private int bitGen = 0;
 
-    private EntityManager entityManager;
+    private final ECS ecs;
 
-    protected SystemManager() {
+    protected SystemManager(ECS ecs) {
+        this.ecs = ecs;
         systems = new Container<>(Long.SIZE);
         systemsMap = new HashMap<>();
         systemBits = new HashMap<>();
     }
 
-    @Override
-    protected void set(ECS ecs) {
-        this.entityManager = ecs.entityManager;
-    }
 
-    @Override
-    protected void initialize() {
+    protected void initializeSystems() {
         systems.fit(true);
         systems.iterate(EntitySystem::initialize);
     }
 
-    @Override
+
     protected void terminate() {
         systems.iterate(EntitySystem::terminate);
         systems.clear();
@@ -49,13 +45,13 @@ public class SystemManager extends ECSManager{
         Class<? extends EntitySystem> c = system.getClass();
         if (systemsMap.get(c) == null) {
             system.setSystemBit(getBit(c));
-            system.set(entityManager);
+            system.set(ecs.entityManager); // maybe ecs instead of entityManager
             systems.push(system);
             systemsMap.put(c,system);
         }
     }
 
-    public <T extends EntitySystem> T getSystem(Class<T> c) {
+    protected <T extends EntitySystem> T getSystem(Class<T> c) {
         return c.cast(systemsMap.get(c));
     }
 

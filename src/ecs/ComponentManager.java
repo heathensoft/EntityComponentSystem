@@ -2,27 +2,17 @@ package ecs;
 
 import ecs.util.Container;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  *
- * ComponentType and ComponentGroup instances are created and stored here.
- *
- *      Maximum number of unique ComponentTypes: 64 (Might be reduced to int32)
- *      Maximum number of unique ComponentGroups: 32767
- *      You cannot delete types or groups from a manager instance once created.
- *      When you initiate a type, 1 "slot" gets taken.
- *      When you initiate a group, it automatically creates types of members.
- *      You can rename types and groups. .ie someGroup.setName()
- *
  * Components are stored and queried here.
  *
- *      Components are indexed by type and entity -id.
+ *      Components are indexed by type and entity-id.
  *      Component containers are not tightly stacked. But they are automatically
  *      refitted to save memory. This happens if a container for a specific
  *      component-type has been inactive for more than 5 minutes.
- *      The MemoryManager then checks if there is possible to save space.
+ *      The ContainerControl then checks if there is possible to save space.
  *      If it is, it will shrink that container to fit its outermost component.
  *
  * @author Frederik Dahl
@@ -30,127 +20,122 @@ import java.util.Map;
  */
 
 
-public class ComponentManager extends ECSManager{
+public class ComponentManager {
 
-    private MemoryManagerOld memoryManager;
+    protected final ECS ecs;
+    protected final ComponentPools pools;
+    protected final TypeManager typeManager;
+    protected final ContainerControl control;
 
-    private final Map<Class<? extends Component>,ComponentType> typeMap;
-    private final Container<ComponentType> typesById;
-    private long nextFlag = 1L;
-    private byte genTypeID = 0;
-
-    private final Container<ComponentGroup> groups;
-    private short genGroupID = 0;
-
+    // We want the active containers to be close to the actual "getting of them".
+    // Since getting them happens in potentially many loops, we want to avoid cascading method-calls on stack.
+    // For that reason we don't store them in a separate class (like we do with pools)
     private final Container<Container<Component>> components;
 
-    private final Container<ComponentPool<? extends Component>> pools;
-    private long poolFlags = 0L;
+    private int active      = 0;    // components in play
+    private long added      = 0L;   // total number of components added
+    private long removed    = 0L;   // total number of components removed
+    private long lost       = 0L;   // total number of components removed and NOT returned to a pool
 
-    private int componentCount = 0;         // components in play
-    private long componentsAdded = 0L;      // total number of components added
-    private long componentsRemoved = 0L;    // total number of components removed
-    private long componentsDiscarded = 0L;  // total number of components removed and NOT returned to a pool
+    private int containerRefits = 0;
+    private int poolRefits = 0;
 
-    protected ComponentManager() {
-        typeMap = new HashMap<>();
-        groups = new Container<>();
-        components = new Container<>(9); // 9 will eventually hit 64 (Max) on resizing
-        typesById = new Container<>(9);
-        pools = new Container<>(9);
+    protected ComponentManager(ECS ecs) {
+        this.ecs = ecs;
+        pools = new ComponentPools(this);
+        typeManager = new TypeManager(this);
+        control = new ContainerControl(this);
+        components = new Container<>(9); // 9 hits 64 (Max) on resizing
     }
 
-    @Override
-    protected void set(ECS ecs) {
-        this.memoryManager = ecs.memoryManager;
+
+    protected void update(float dt) {
+        control.check(dt);
     }
 
-    @Override
     protected void terminate() {
 
-        pools.iterate(pool -> pool.clear(false));
-        pools.clear();
-        components.iterate(Container::clear);
-        components.clear();
-        groups.clear();
-        typeMap.clear();
-
-
     }
 
-    protected  <T extends Component> void registerPool(ComponentPool<T> pool, Class<T> clazz) {
-        ComponentType type = getType(clazz);
-        if (poolRegistered(type))
-            throw new IllegalStateException("Duplicate pool");
-        occupyPoolSlot(type);
-        pool.register(memoryManager,type);
-        pools.set(pool,type.id);
+    protected <T extends Component> void registerPool(ComponentPool<T> pool, Class<T> clazz) {
+        pools.register(pool,clazz);
     }
 
     /**
      * Any replaced component get pooled if pool is registered for type.
+     * If the component replaced another of the same type. There is no need
+     * to refresh the entity. (no need to revalidate it's belonging in systems)
      *
      * @param e the entity
      * @param c the component to be added to entity
-     * @return whether another component of same type as c was replaced by c
+     * @return whether the entity should be refreshed
      */
     protected boolean addComponent(Entity e, Component c) {
-        if (c == null) throw new IllegalStateException("Component cannot be null");
-        boolean replaced;
-        ComponentType type = getType(c.getClass());
+        if (c == null)
+            throw new IllegalStateException("null Component");
+        boolean shouldRefreshEntity;
+        final ComponentType type = getType(c.getClass());
         if (e.hasComponent(type.flag)) {
-            Component removed = removeComponentFromContainer(e.id,type.id);
+            final Component removed = removeComponentFromContainer(e.id,type.id);
             if (removed == null) throw new IllegalStateException("Component should not be null atp");
-            if (poolRegistered(type)) // if pool is registered and receives components of c's type;
-                pools.get(type.id).freeInternal(c);
-            replaced = true;
+            // explicitly typed for readability. see the tryFree() def.
+            final boolean lostReference = pools.tryFree(c,type);
+            if (lostReference) lost++;
+            shouldRefreshEntity = false;
         } else {
-            replaced = false;
+            shouldRefreshEntity = true;
             e.addComponent(type.flag);
-            memoryManager.resetContainerTimer(type.id);
-            componentCount++;
+            control.resetContainerTimer(type.id);
+            added++;
+            active++;
         }
         components.get(type.id).set(c,e.id);
-        return replaced;
+        return shouldRefreshEntity;
     }
 
     protected void removeAll(Entity e) {
-        Container<Component> componentsByType;
-        Component component;
-        e.setComponents(0);
-        for (int i = 0; i < uniqueTypes(); i++) {
-            componentsByType = components.get(i);
-            if (e.id < componentsByType.usedSpace()) {
-                component = componentsByType.remove(e.id);
-                if (component != null) {
-                    componentCount--;
-                    ComponentType type = typesById.get(i);
-                    memoryManager.resetContainerTimer(type.id);
-                    if (poolRegistered(type))
-                        pools.get(type.id).freeInternal(component);
-                    else {
-                        // increase comps lost
-                    }
-                }
-            }
+        // entity is checked if it has any components before this method-call.
+        // so we know the entity has at least one component atp
+        // exceptions should be removed after testing stages
+        Component c;
+        Container<Component> byType;
+        for (ComponentType t: typeManager.getList()) {
+            if (!e.hasComponent(t.flag))
+                continue;
+            byType = components.get(t.id);
+            c = byType.remove(e.id);
+            if (c == null)
+                throw new IllegalStateException("Component should not be null atp");
+            e.removeComponent(t.flag);
+            removed++;
+            active--;
+            control.resetContainerTimer(t.id);
+            // explicitly typed for readability. see the tryFree() def.
+            final boolean lostReference = pools.tryFree(c,t);
+            if (lostReference) lost++;
         }
     }
 
+    /**
+     * Removes the ComponentType from the entity if it has one.
+     * If no component was removed there is no need to refresh the entity.
+     * Tries to free the component (return it to pool) if the type has a registered pool.
+     * @param e the entity
+     * @param t the type of component to remove
+     * @return whether the component was found and the entity should refresh.
+     */
     protected boolean removeComponent(Entity e, ComponentType t) {
         if (!e.hasComponent(t.flag)) return false;
-        Component c = removeComponentFromContainer(e.id,t.id);
-        if (c == null)
+        final Component c = removeComponentFromContainer(e.id,t.id);
+        if (c == null) // if no component found, but entity's flag is true
             throw new IllegalStateException("Component should not be null atp");
         e.removeComponent(t.flag);
-        if (poolRegistered(t))
-            pools.get(t.id).freeInternal(c);
-        else {
-
-            // increase components lost
-        }
-        memoryManager.resetContainerTimer(t.id);
-
-        componentCount--;
+        // explicitly typed for readability. see the tryFree() def.
+        final boolean lostReference = pools.tryFree(c,t);
+        if (lostReference) lost++;
+        control.resetContainerTimer(t.id);
+        removed++;
+        active--;
         return true;
     }
 
@@ -158,19 +143,17 @@ public class ComponentManager extends ECSManager{
      * Removes a Component of the same type as c from the entity.
      * What matters is the type of c. It does not check for equals.
      * It could remove another component entirely (of the same type) than the passed in c.
-     *
      * Removed components get pooled if pool registered for type.
-     *
      * @param e the entity
      * @param c the component to be removed (Only the type of c matters)
-     * @return whether a component was removed
+     * @return whether a component was removed and the entity therefore should be refreshed
      */
     protected boolean removeComponent(Entity e, Component c) {
         return removeComponent(e,getType(c.getClass()));
     }
 
     private Component removeComponentFromContainer(int entityID, byte typeID) {
-        Container<Component> container = components.get(typeID);
+       final Container<Component> container = components.get(typeID);
         if (entityID < container.usedSpace())
             return container.remove(entityID);
         return null;
@@ -190,89 +173,114 @@ public class ComponentManager extends ECSManager{
     }
 
     public Component getComponent(Entity e, ComponentType t) {
-        Container<Component> container = components.get(t.id);
-        if (e.id < container.usedSpace())
-            return container.get(e.id);
+        final Container<Component> byType = components.get(t.id);
+        if (e.id < byType.usedSpace())
+            return byType.get(e.id);
         return null;
     }
 
-    public ComponentType getType(Class<? extends Component> c) {
-        ComponentType type = typeMap.get(c);
-        if (type == null) {
-            if (uniqueTypes() == Long.SIZE)
-                throw new IllegalStateException("limit break: maximum unique component-types");
-            type = new ComponentType(c,nextFlag,genTypeID);
-            nextFlag = nextFlag << 1;
-            genTypeID++;
-            typeMap.put(c,type);
-            typesById.push(type);
-            components.push(new Container<>());
-            memoryManager.newTimer();
-        }return type;
+
+
+
+
+    // Type getter/creators - public in ECS
+
+    protected ComponentType getType(Class<? extends Component> c) {
+        return typeManager.getType(c);
     }
 
-    public ComponentGroup getGroup(ComponentType... types) {
-        ComponentGroup group;
-        long mask = 0;
-        for (ComponentType type : types)
-            mask |= type.flag;
-        group = lookUpGroup(mask);
-        if (group == null) {
-            group = new ComponentGroup(mask,genGroupID);
-            groups.set(group,group.id);
-            genGroupID++;
-        }return group;
+    protected ComponentGroup getGroup(ComponentType... types) {
+        return this.typeManager.getGroup(types);
     }
 
     @SafeVarargs
-    public final ComponentGroup getGroup(Class<? extends Component>... classes) {
-        ComponentType[] types = new ComponentType[classes.length];
-        for (int i = 0; i < classes.length; i++)
-            types[i] = getType(classes[i]);
-        return getGroup(types);
+    protected final ComponentGroup getGroup(Class<? extends Component>... classes) {
+       return typeManager.getGroup(classes);
     }
 
-    public int uniqueTypes() {
-        return typeMap.size();
+
+
+    // Stats - public in RunTimeStatistics
+
+    protected int componentsActive() {
+        return active;
     }
 
-    public int uniqueGroups() {
-        return groups.itemCount();
+    protected long componentsAdded() {
+        return added;
     }
 
-    protected boolean autoFitContainer(byte index) {
-        return components.get(index).fit(false);
+    protected long componentsRemoved() {
+        return removed;
     }
 
-    protected boolean autoFitPool(byte index) {
-        return pools.get(index).fit();
+    protected long componentsLost() {
+        return lost;
     }
 
-    protected int poolCount() {
-        return pools.itemCount();
+    protected int containerRefits() {
+        return containerRefits;
     }
 
-    protected int componentCount() {
-        return componentCount;
+    protected int poolRefits() {
+        return poolRefits;
     }
 
-    protected Container<ComponentPool<? extends Component>> getPools() {
-        return pools;
+
+
+
+    protected Container<Component> getContainer(ComponentType t) {
+        if (t == null) // container will always exist if type exist.
+            throw new IllegalStateException("ComponentType = null");
+        return components.get(t.id);
     }
 
-    private ComponentGroup lookUpGroup(long mask) {
-        ComponentGroup group = null;
-        for (int i = 0; i < groups.itemCount(); i++) {
-            group = groups.get(i);
-            if (group.match(mask)) break;
-        }return group;
+    protected int getContainerSize(ComponentType t) {
+        return components.get(t.id).itemCount();
     }
 
-    public boolean poolRegistered(ComponentType type) {
-        return (poolFlags & type.flag) == type.flag;
+    protected int getContainerCapacity(ComponentType t) {
+        return components.get(t.id).capacity();
     }
 
-    private void occupyPoolSlot(ComponentType type) {
-        poolFlags |= type.flag;
+    protected float getContainerLoadFactor(ComponentType t) {
+        return components.get(t.id).loadFactor();
     }
+
+    protected float getContainersLoadFactor() {
+        final List<ComponentType> typesList = typeManager.getList();
+        if (typesList.isEmpty())
+            return 1f;
+        int capacity = 0;
+        int count = 0;
+        for (ComponentType type: typesList) {
+            capacity += getContainerCapacity(type);
+            count += getContainerSize(type);
+        }
+        // capacity would never be zero
+        return (float) count / capacity;
+    }
+
+
+
+
+    // Callbacks
+
+    // callback from ComponentTypes
+    protected void newContainer() {
+        components.push(new Container<>());
+    }
+
+    // callback from ContainerControl
+    protected void attemptRefitContainer(byte typeID) {
+        if (components.get(typeID).fit(false))
+            containerRefits++;
+    }
+
+    // callback from ContainerControl
+    protected void attemptRefitPool(byte typeID) {
+        if (pools.getPools().get(typeID).fit())
+            poolRefits++;
+    }
+
 }
