@@ -47,7 +47,6 @@ public class ECS {
         if (diagnostics == null)
             throw new IllegalArgumentException("null argument");
         if (this.diagnostics != null) {
-            this.diagnostics.stop();
             try {
                 this.diagnostics.awaitTermination();
             } catch (InterruptedException e) {
@@ -55,6 +54,7 @@ public class ECS {
             }
         }
         this.diagnostics = diagnostics;
+        diagnostics.set(runTimeStatistics);
         new Thread(diagnostics).start();
     }
 

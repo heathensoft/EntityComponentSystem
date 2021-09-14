@@ -2,7 +2,6 @@ package ecs;
 
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import static java.lang.System.nanoTime;
 
@@ -10,14 +9,8 @@ import static java.lang.System.nanoTime;
  *
  * Diagnostics are run from ECS class.
  * It keeps track of the thread running it.
- * The awaitTermination() method is like the Thread join() method,
- * only you must call stop() beforehand.
- * If you run the same Diagnostic instance twice,
- * i.e. Diagnostic is running, and you invoke the same instance twice in ecs.run(diagnostic)
- * then a new thread is started (after the old is terminated) and you are responsible
- * for resetting the necessary data. This can be done in the finish() method.
- * Even if you did not entirely understand this, either way:
- * IT IS BETTER PRACTICE using a new diagnostic object for every "run"
+ * The awaitTermination() method is equivalent to the Thread join() method
+ * IT IS RECOMMENDED using a new Diagnostic instance for every "run"
  *
  *
  *
@@ -28,19 +21,12 @@ import static java.lang.System.nanoTime;
 
 public abstract class Diagnostics implements Runnable{
 
-    /*
-    final StringBuilder path = new StringBuilder();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMddHHmm");
-    path.append(directory).append("ECS-D_").append(LocalDateTime.now().format(formatter)).append(".csv");
-     */
-
     private Thread thread;
     private final double interval; // time of a "tick" in seconds
     private volatile boolean isRunning;
     private boolean isSet;
     private RunTimeStatistics rts;
     private final Object lock = new Object();
-    private String id = "";
 
     public Diagnostics(double interval) {
         this.interval = interval;
@@ -48,15 +34,16 @@ public abstract class Diagnostics implements Runnable{
 
     @Override
     public void run() {
+
         synchronized (lock) {
-            if (thread == null | isRunning | !isSet) {
+            if (thread != null | isRunning | !isSet)
                 throw new IllegalStateException("");
-            }
             isRunning = true;
             this.thread = Thread.currentThread();
         }
+
         try {
-            setID();
+            init(LocalDateTime.now());
             double startTime = timeSeconds();
             double endTime;
             double deltaTime = 0.0d;
@@ -73,30 +60,23 @@ public abstract class Diagnostics implements Runnable{
                 startTime = endTime;
             }
         } finally {
-            finish();
+            finish(LocalDateTime.now());
         }
-    }
-
-    private void setID() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMddHHmm");
-        id = "ECS-D_" + LocalDateTime.now().format(formatter);
     }
 
     private double timeSeconds() {
         return nanoTime() / 1_000_000_000.0d;
     }
 
+    protected abstract void init(LocalDateTime timeStamp);
+
     protected abstract void process(long tick, RunTimeStatistics snapShot);
 
-    protected abstract void finish();
+    protected abstract void finish(LocalDateTime timeStamp);
 
     protected final void set(RunTimeStatistics rts) {
+        this.isSet = true;
         this.rts = rts;
-        isSet = true;
-    }
-
-    public String id() {
-        return id;
     }
 
     public final void stop() {
@@ -105,13 +85,11 @@ public abstract class Diagnostics implements Runnable{
 
     public synchronized final void awaitTermination()
             throws InterruptedException{
-        if (Thread.currentThread() == thread)
-            throw new IllegalStateException("Attempted to join with itself");
-        if (isRunning)
-            throw new IllegalStateException("Always invoke stop before this");
-        if (thread == null) return;
-        if (thread.getState() != Thread.State.TERMINATED)
-            thread.join();
-        thread = null;
+        if (this.thread == null) return;
+        if (Thread.currentThread().equals(this.thread))
+            throw new IllegalStateException("Infinite: join on itself");
+        if (isRunning) stop();
+        this.thread.join();
+        this.thread = null;
     }
 }
