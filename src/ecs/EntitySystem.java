@@ -41,6 +41,7 @@ public abstract class EntitySystem {
     // 1.   if the entity is disabled, we only need to check if it is in the system. If it is, remove it.
     // 2.   in the case enabled == true, we first check the status-quo to see if we can return immediately.
     //      status-quo being: its both in the system and has the required components. OR the opposite.
+    //      That can be simplified to: inSystem == hasComponents. (No change)
     // 3.   now we only need to know if it's in the system. if true, we know its missing the components,
     //      and therefore we remove it. else we know it meets the requirements, and we add it.
 
@@ -48,7 +49,7 @@ public abstract class EntitySystem {
         final boolean inSystem = e.inSystem(systemBit);
         final boolean hasComponents = group.containsAll(e.components());
         if (e.isEnabled()) {
-            if ((inSystem && hasComponents) || (!inSystem && !hasComponents)) return;
+            if (inSystem == hasComponents) return;
             if (inSystem) removeEntity(e);
             else addEntity(e);
         } else if (inSystem) removeEntity(e);
