@@ -29,13 +29,28 @@ public abstract class EntitySystem {
         this.entityManager = entityManager;
     }
 
+    /**
+     * Any state-changes to an entity (add/rem-components, enable/disable)
+     * will in most cases trigger its revalidation by each registered system.
+     * Systems will appropriately keep, add or remove the entity.
+     *
+     * @param e the entity e to be revalidated by the system
+     */
+
+    // this setup should have the least logical operations for the most common-case revalidation call.
+    // 1.   if the entity is disabled, we only need to check if it is in the system. If it is, remove it.
+    // 2.   in the case enabled == true, we first check the status-quo to see if we can return immediately.
+    //      status-quo being: its both in the system and has the required components. OR the opposite.
+    // 3.   now we only need to know if it's in the system. if true, we know its missing the components,
+    //      and therefore we remove it. else we know it meets the requirements, and we add it.
+
     protected final void revalidate(Entity e) {
         final boolean inSystem = e.inSystem(systemBit);
         final boolean hasComponents = group.containsAll(e.components());
         if (e.isEnabled()) {
-            if (inSystem && hasComponents) return;
-            if (!inSystem && hasComponents) addEntity(e);
-            else if (inSystem) removeEntity(e); // !hasComponents == true atp
+            if ((inSystem && hasComponents) || (!inSystem && !hasComponents)) return;
+            if (inSystem) removeEntity(e);
+            else addEntity(e);
         } else if (inSystem) removeEntity(e);
     }
 
