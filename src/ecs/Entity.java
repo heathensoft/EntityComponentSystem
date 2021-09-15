@@ -12,11 +12,11 @@ import ecs.util.KVShared;
 
 public class Entity extends KVShared {
 
-    protected final int id;
-    protected long systems;
-    protected long components;
-    protected boolean enabled;
-    protected boolean dirty;
+    private final int id;
+    private long systems;
+    private long components;
+    private boolean enabled;
+    private boolean dirty;
 
     protected Entity( int id) {
         this.id = id;
@@ -38,8 +38,24 @@ public class Entity extends KVShared {
         return dirty;
     }
 
+    protected void markAsDirty() {
+        dirty = true;
+    }
+
+    protected void markAsClean() {
+        dirty = false;
+    }
+
     public boolean isEnabled() {
         return enabled;
+    }
+
+    protected void disable() {
+        enabled = false;
+    }
+
+    protected void enable() {
+        enabled = true;
     }
 
     public long systemCount() {
@@ -57,8 +73,6 @@ public class Entity extends KVShared {
     public long components() {
         return components;
     }
-
-
 
     protected boolean inSystem(long bit) {
         return (systems & bit) == bit;

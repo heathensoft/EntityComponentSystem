@@ -65,13 +65,13 @@ public class TypeManager {
         ComponentGroup group;
         long mask = 0;
         for (ComponentType type : types)
-            mask |= type.flag;
+            mask |= type.flag();
         group = lookUpGroup(mask);
         if (group == null) {
             if (manager.ecs.isInitialized())
                 throw new IllegalStateException("Creating groups after ECS init not allowed");
             group = new ComponentGroup(mask,genGroupID);
-            groups.set(group,group.id);
+            groups.set(group,group.id());
             genGroupID++;
         }return group;
     }

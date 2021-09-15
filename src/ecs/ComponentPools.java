@@ -31,7 +31,7 @@ public class ComponentPools {
             throw new IllegalStateException("Pool already registered for type: " + type.name());
         occupyPoolSlot(type);
         types.add(type);
-        pools.set(pool,type.id);
+        pools.set(pool,type.id());
         pool.register(manager.control,type);
     }
 
@@ -48,7 +48,7 @@ public class ComponentPools {
      */
     protected boolean tryFree(Component c, ComponentType type) {
         if (poolRegistered(type)) {
-            pools.get(type.id).freeInternal(c);
+            pools.get(type.id()).freeInternal(c);
             return false;
         } return true;
     }
@@ -59,7 +59,7 @@ public class ComponentPools {
 
     protected ComponentPool<? extends Component> getPool(ComponentType type) {
         if (poolRegistered(type))
-            return pools.get(type.id);
+            return pools.get(type.id());
         return null;
     }
 
@@ -140,10 +140,10 @@ public class ComponentPools {
 
 
     private boolean poolRegistered(ComponentType type) {
-        return (poolFlags & type.flag) == type.flag;
+        return (poolFlags & type.flag()) == type.flag();
     }
 
     private void occupyPoolSlot(ComponentType type) {
-        poolFlags |= type.flag;
+        poolFlags |= type.flag();
     }
 }

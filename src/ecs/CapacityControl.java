@@ -34,7 +34,7 @@ import java.util.Arrays;
  */
 
 
-public class ContainerControl {
+public class CapacityControl {
 
     private static final short CONTAINER_CHECKED    = 0x0F;
     private static final short POOL_CHECKED         = 0xF0;
@@ -47,7 +47,7 @@ public class ContainerControl {
 
     private final ComponentManager manager;
 
-    protected ContainerControl(ComponentManager componentManager) {
+    protected CapacityControl(ComponentManager componentManager) {
         this.manager = componentManager;
         timers = new short[Long.SIZE];
         Arrays.fill(timers,UP_TO_DATE);

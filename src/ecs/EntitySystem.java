@@ -31,8 +31,8 @@ public abstract class EntitySystem {
 
     protected final void revalidate(Entity e) {
         final boolean inSystem = e.inSystem(systemBit);
-        final boolean hasComponents = group.containsAll(e.components);
-        if (e.enabled) {
+        final boolean hasComponents = group.containsAll(e.components());
+        if (e.isEnabled()) {
             if (inSystem && hasComponents) return;
             if (!inSystem && hasComponents) addEntity(e);
             else if (inSystem) removeEntity(e); // !hasComponents == true atp

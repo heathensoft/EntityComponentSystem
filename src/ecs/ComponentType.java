@@ -10,8 +10,8 @@ package ecs;
 public class ComponentType {
 
     private final Class<? extends Component> componentClass;
-    protected final long flag;
-    protected final byte id;
+    private final long flag;
+    private final byte id;
     private String name;
 
 

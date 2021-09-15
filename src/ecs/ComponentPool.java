@@ -33,15 +33,15 @@ import ecs.util.Pool;
 
 public abstract class ComponentPool<T extends Component> extends Pool<T> {
 
-    protected ContainerControl containerControl;
+    protected CapacityControl capacityControl;
     protected ComponentType componentType;
 
     public ComponentPool(int initialCapacity) {
         super(initialCapacity);
     }
 
-    protected void register(ContainerControl containerControl, ComponentType componentType) {
-        this.containerControl = containerControl;
+    protected void register(CapacityControl capacityControl, ComponentType componentType) {
+        this.capacityControl = capacityControl;
         this.componentType = componentType;
     }
 
@@ -56,13 +56,13 @@ public abstract class ComponentPool<T extends Component> extends Pool<T> {
 
     @Override
     protected void reset(T c) {
-        containerControl.resetPoolTimer(componentType.id);
+        capacityControl.resetPoolTimer(componentType.id());
         resetComponent(c);
     }
 
     @Override
     protected void obtained(T c, boolean newInstance) {
-        if (!newInstance) containerControl.resetPoolTimer(componentType.id);
+        if (!newInstance) capacityControl.resetPoolTimer(componentType.id());
     }
 
     protected abstract void resetComponent(T c);

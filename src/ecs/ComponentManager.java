@@ -12,7 +12,7 @@ import java.util.List;
  *      Component containers are not tightly stacked. But they are automatically
  *      refitted to save memory. This happens if a container for a specific
  *      component-type has been inactive for more than 5 minutes.
- *      The ContainerControl then checks if there is possible to save space.
+ *      The CapacityControl then checks if there is possible to save space.
  *      If it is, it will shrink that container to fit its outermost component.
  *
  * @author Frederik Dahl
@@ -25,11 +25,8 @@ public class ComponentManager {
     protected final ECS ecs;
     protected final ComponentPools pools;
     protected final TypeManager typeManager;
-    protected final ContainerControl control;
+    protected final CapacityControl control;
 
-    // We want the active containers to be close to the actual "getting of them".
-    // Since getting them happens in potentially many loops, we want to avoid cascading method-calls on stack.
-    // For that reason we don't store them in a separate class (like we do with pools)
     private final Container<Container<Component>> components;
 
     private int active      = 0;    // components in play
@@ -44,7 +41,7 @@ public class ComponentManager {
         this.ecs = ecs;
         pools = new ComponentPools(this);
         typeManager = new TypeManager(this);
-        control = new ContainerControl(this);
+        control = new CapacityControl(this);
         components = new Container<>(9); // 9 hits 64 (Max) on resizing
     }
 
@@ -75,8 +72,9 @@ public class ComponentManager {
             throw new IllegalStateException("null Component");
         boolean shouldRefreshEntity;
         final ComponentType type = getType(c.getClass());
-        if (e.hasComponent(type.flag)) {
-            final Component removed = removeComponentFromContainer(e.id,type.id);
+        final byte typeID = type.id();
+        if (e.hasComponent(type.flag())) {
+            final Component removed = removeComponentFromContainer(e.id(),typeID);
             if (removed == null) throw new IllegalStateException("Component should not be null atp");
             // explicitly typed for readability. see the tryFree() def.
             final boolean lostReference = pools.tryFree(c,type);
@@ -84,12 +82,12 @@ public class ComponentManager {
             shouldRefreshEntity = false;
         } else {
             shouldRefreshEntity = true;
-            e.addComponent(type.flag);
-            control.resetContainerTimer(type.id);
+            e.addComponent(type.flag());
+            control.resetContainerTimer(typeID);
             added++;
             active++;
         }
-        components.get(type.id).set(c,e.id);
+        components.get(typeID).set(c,e.id());
         return shouldRefreshEntity;
     }
 
@@ -100,16 +98,16 @@ public class ComponentManager {
         Component c;
         Container<Component> byType;
         for (ComponentType t: typeManager.getList()) {
-            if (!e.hasComponent(t.flag))
+            if (!e.hasComponent(t.flag()))
                 continue;
-            byType = components.get(t.id);
-            c = byType.remove(e.id);
+            byType = components.get(t.id());
+            c = byType.remove(e.id());
             if (c == null)
                 throw new IllegalStateException("Component should not be null atp");
-            e.removeComponent(t.flag);
+            e.removeComponent(t.flag());
             removed++;
             active--;
-            control.resetContainerTimer(t.id);
+            control.resetContainerTimer(t.id());
             // explicitly typed for readability. see the tryFree() def.
             final boolean lostReference = pools.tryFree(c,t);
             if (lostReference) lost++;
@@ -125,15 +123,16 @@ public class ComponentManager {
      * @return whether the component was found and the entity should refresh.
      */
     protected boolean removeComponent(Entity e, ComponentType t) {
-        if (!e.hasComponent(t.flag)) return false;
-        final Component c = removeComponentFromContainer(e.id,t.id);
+        if (!e.hasComponent(t.flag())) return false;
+        final byte typeID = t.id();
+        final Component c = removeComponentFromContainer(e.id(),typeID);
         if (c == null) // if no component found, but entity's flag is true
             throw new IllegalStateException("Component should not be null atp");
-        e.removeComponent(t.flag);
+        e.removeComponent(t.flag());
         // explicitly typed for readability. see the tryFree() def.
         final boolean lostReference = pools.tryFree(c,t);
         if (lostReference) lost++;
-        control.resetContainerTimer(t.id);
+        control.resetContainerTimer(typeID);
         removed++;
         active--;
         return true;
@@ -164,23 +163,24 @@ public class ComponentManager {
      * see: ecs.Getter.java. The only class that use this.
      * public equivalent: getComponent()
      *
-     * @param e the entity
-     * @param t the type
+     * @param entityID the entity
+     * @param typeID the type
      * @return the component
      */
-    protected Component getComponentUnsafe(Entity e, ComponentType t) {
-        return components.get(t.id).get(e.id);
+    protected Component getComponentUnsafe(int entityID, byte typeID) {
+        return components.get(typeID).get(entityID);
     }
 
     public Component getComponent(Entity e, ComponentType t) {
-        final Container<Component> byType = components.get(t.id);
-        if (e.id < byType.usedSpace())
-            return byType.get(e.id);
-        return null;
+        return getComponent(e.id(), t.id());
     }
 
-
-
+    protected Component getComponent(int entityID, byte typeID) {
+        final Container<Component> byType = components.get(typeID);
+        if (entityID < byType.usedSpace())
+            return byType.get(entityID);
+        return null;
+    }
 
 
     // Type getter/creators - public in ECS
@@ -232,19 +232,19 @@ public class ComponentManager {
     protected Container<Component> getContainer(ComponentType t) {
         if (t == null) // container will always exist if type exist.
             throw new IllegalStateException("ComponentType = null");
-        return components.get(t.id);
+        return components.get(t.id());
     }
 
     protected int getContainerSize(ComponentType t) {
-        return components.get(t.id).itemCount();
+        return components.get(t.id()).itemCount();
     }
 
     protected int getContainerCapacity(ComponentType t) {
-        return components.get(t.id).capacity();
+        return components.get(t.id()).capacity();
     }
 
     protected float getContainerLoadFactor(ComponentType t) {
-        return components.get(t.id).loadFactor();
+        return components.get(t.id()).loadFactor();
     }
 
     protected float getContainersLoadFactor() {

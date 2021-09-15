@@ -41,7 +41,7 @@ public class EntityManager {
 
     public Entity create() {
         Entity e = pool.obtain();
-        entities.set(e,e.id);
+        entities.set(e,e.id());
         return e;
     }
 
@@ -87,13 +87,13 @@ public class EntityManager {
     }
 
     public void disable(Entity e) {
-        if (e.enabled) refresh(e);
-        e.enabled = false;
+        if (e.isEnabled()) refresh(e);
+        e.disable();
     }
 
     public void enable(Entity e) {
-        if (!e.enabled) refresh(e);
-        e.enabled = true;
+        if (!e.isEnabled()) refresh(e);
+        e.enable();
     }
 
     /**
@@ -104,9 +104,9 @@ public class EntityManager {
      * @param e the entity to refresh
      */
     public void refresh(Entity e) {
-        if (e.dirty) return;
+        if (e.isDirty()) return;
         dirty.push(e);
-        e.dirty = true;
+        e.markAsDirty();
     }
 
     public int entities() {
@@ -140,18 +140,18 @@ public class EntityManager {
             final int systemCount = systems.itemCount();
             final int dirtyCount = dirty.itemCount();
             for (int i = 0; i < dirtyCount; i++) {
-                Entity entity = dirty.get(i);
+                Entity e = dirty.get(i);
                 for (int j = 0; j < systemCount; j++)
-                    systems.get(j).revalidate(entity);
-                entity.dirty = false;
-                if (!entity.hasAnyComponent())
-                    delete(entity);
+                    systems.get(j).revalidate(e);
+                e.markAsClean();
+                if (!e.hasAnyComponent())
+                    delete(e);
             }dirty.clear();
         }
     }
 
     private void delete(Entity e) {
-        entities.remove(e.id);
+        entities.remove(e.id());
         pool.free(e);
     }
 

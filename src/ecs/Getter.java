@@ -4,6 +4,7 @@ package ecs;
  * A" component getter" helper class for fast queries of ECS component containers.
  * You can create them in the ESC class
  *
+ *
  * @author Frederik Dahl
  * 05/09/2021
  */
@@ -11,12 +12,12 @@ package ecs;
 
 public class Getter<T extends Component>{
 
+    private final byte typeID;
     private final Class<T> clazz;
-    private final ComponentType componentType;
     private final ComponentManager componentManager;
 
     public Getter(Class<T> clazz, ComponentManager componentManager) {
-        this.componentType = componentManager.getType(clazz);
+        this.typeID = componentManager.getType(clazz).id();
         this.componentManager = componentManager;
         this.clazz = clazz;
     }
@@ -28,7 +29,7 @@ public class Getter<T extends Component>{
      */
     @SuppressWarnings("unchecked")
     public final T getUnsafe(Entity e) {
-        return (T)componentManager.getComponentUnsafe(e,componentType);
+        return (T)componentManager.getComponentUnsafe(e.id(),typeID);
     }
     /**
      * Class-cast with checking for index out of bounds
@@ -37,6 +38,6 @@ public class Getter<T extends Component>{
      * @return the component cast to: (T extends Component), or null
      */
     public final T get(Entity e) {
-        return clazz.cast(componentManager.getComponent(e,componentType));
+        return clazz.cast(componentManager.getComponent(e.id(),typeID));
     }
 }

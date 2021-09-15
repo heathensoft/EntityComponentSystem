@@ -9,8 +9,8 @@ package ecs;
 public class ComponentGroup {
 
     private String name;
-    protected final long mask;
-    protected final short id;
+    private final long mask;
+    private final short id;
 
     protected ComponentGroup(long mask, short id) {
         this.mask = mask;

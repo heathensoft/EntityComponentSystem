@@ -23,10 +23,9 @@ public abstract class Diagnostics implements Runnable{
 
     private Thread thread;
     private final double interval; // time of a "tick" in seconds
-    private volatile boolean isRunning;
+    private boolean isRunning;
     private boolean isSet;
     private RunTimeStatistics rts;
-    private final Object lock = new Object();
 
     public Diagnostics(double interval) {
         this.interval = interval;
@@ -35,7 +34,7 @@ public abstract class Diagnostics implements Runnable{
     @Override
     public void run() {
 
-        synchronized (lock) {
+        synchronized (this) {
             if (thread != null | isRunning | !isSet)
                 throw new IllegalStateException("");
             isRunning = true;
@@ -79,8 +78,12 @@ public abstract class Diagnostics implements Runnable{
         this.rts = rts;
     }
 
-    public final void stop() {
+    public synchronized final void stop() {
         isRunning = false;
+    }
+
+    public synchronized final boolean isRunning() {
+        return isRunning;
     }
 
     public synchronized final void awaitTermination()
