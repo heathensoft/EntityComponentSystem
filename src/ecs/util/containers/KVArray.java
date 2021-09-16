@@ -1,9 +1,10 @@
-package ecs.util;
+package ecs.util.containers;
 
 
-import ecs.util.exceptions.EmptyCollectionException;
-import ecs.util.exceptions.ItemNotFoundException;
-import ecs.util.exceptions.KeyStateConflictException;
+import ecs.util.ShortStack;
+import ecs.util.containers.exceptions.EmptyCollectionException;
+import ecs.util.containers.exceptions.ItemNotFoundException;
+import ecs.util.containers.exceptions.KeyStateConflictException;
 
 /**
  *
@@ -23,7 +24,7 @@ import ecs.util.exceptions.KeyStateConflictException;
  * Downside:
  * Not java Collections.
  * Items must implement KeyValue.
- * Must use an ecs.util.Iterator to iterate.
+ * Must use an ecs.util.containers.Iterator to iterate.
  * Overhead in items inhabiting multiple KVArrays.
  *
  *

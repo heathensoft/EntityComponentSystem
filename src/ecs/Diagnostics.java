@@ -1,15 +1,16 @@
 package ecs;
 
 
-import java.time.LocalDateTime;
+import ecs.util.time.DeltaLoop;
+import ecs.util.time.Update;
 
-import static java.lang.System.nanoTime;
+import java.time.LocalDateTime;
 
 /**
  *
- * Diagnostics are run from ECS class.
+ * Diagnostics are run from ECS class (After setting it)
  * It keeps track of the thread running it.
- * The awaitTermination() method is equivalent to the Thread join() method
+ * The awaitTermination() method is equivalent exiting the loop and calling the Thread join() method
  * IT IS RECOMMENDED using a new Diagnostic instance for every "run"
  *
  *
@@ -19,14 +20,17 @@ import static java.lang.System.nanoTime;
  */
 
 
-public abstract class Diagnostics implements Runnable{
+public abstract class Diagnostics implements Runnable {
 
     private Thread thread;
-    private final double interval; // time of a "tick" in seconds
-    private boolean isRunning;
-    private boolean isSet;
+    private final double interval;
+    private boolean running;
+    private boolean set;
     private RunTimeStatistics rts;
 
+    /**
+     * @param interval the time-value in seconds of a "tick"
+     */
     public Diagnostics(double interval) {
         this.interval = interval;
     }
@@ -35,63 +39,77 @@ public abstract class Diagnostics implements Runnable{
     public void run() {
 
         synchronized (this) {
-            if (thread != null | isRunning | !isSet)
+            if (thread != null | running | !set)
                 throw new IllegalStateException("");
-            isRunning = true;
+            running = true;
             this.thread = Thread.currentThread();
         }
 
-        try {
-            init(LocalDateTime.now());
-            double startTime = timeSeconds();
-            double endTime;
-            double deltaTime = 0.0d;
-            double accumulator = 0.0d;
-            long tick = 0;
-            while (isRunning) {
-                accumulator += deltaTime;
-                if (accumulator > interval) {
-                    accumulator -= interval;
-                    process(++tick,rts);
-                }
-                endTime = timeSeconds();
-                deltaTime = endTime - startTime;
-                startTime = endTime;
+        DeltaLoop deltaLoop = new DeltaLoop(new Update() {
+            private long tick = 0L;
+            @Override
+            public void step(double deltaTime) {
+                process(++tick,rts);
             }
-        } finally {
-            finish(LocalDateTime.now());
+        }, interval);
+
+        Exception e = null;
+
+        try {
+            start(LocalDateTime.now());
+            deltaLoop.initialize();
+            while (running) deltaLoop.update();
+        }catch (Exception exception) {
+            stop();
+            e = exception;
+        }finally {
+            finish(LocalDateTime.now(),e);
         }
     }
 
-    private double timeSeconds() {
-        return nanoTime() / 1_000_000_000.0d;
-    }
+    /**
+     * This can be used to set up output and creating files.
+     *
+     * @param timeStamp the localDateTime. Useful for naming files
+     * @throws Exception typically IOException. Exceptions are caught, and passed to finish()
+     */
+    protected abstract void start(LocalDateTime timeStamp) throws Exception;
 
-    protected abstract void init(LocalDateTime timeStamp);
-
+    /**
+     * Every tick the runTime snapshot is passed in here together with the tick value.
+     * Used to process that information. Typically, output.
+     *
+     * @param tick the tick (number of intervals)
+     * @param snapShot the RunTimeStatistics at the given time
+     */
     protected abstract void process(long tick, RunTimeStatistics snapShot);
 
-    protected abstract void finish(LocalDateTime timeStamp);
+    /**
+     * Handle tidy-ups here. i.e. flushing output buffers
+     *
+     * @param timeStamp the localDateTime
+     * @param exception if null, diagnostics finished without exception
+     */
+    protected abstract void finish(LocalDateTime timeStamp, Exception exception);
 
     protected final void set(RunTimeStatistics rts) {
-        this.isSet = true;
+        this.set = true;
         this.rts = rts;
     }
 
-    public synchronized final void stop() {
-        isRunning = false;
+    /**
+     * Not used by the ECS
+     */
+    public synchronized void stop() {
+        running = false;
     }
 
-    public synchronized final boolean isRunning() {
-        return isRunning;
-    }
-
-    public synchronized final void awaitTermination()
+    public synchronized final void awaitStop()
             throws InterruptedException{
         if (this.thread == null) return;
         if (Thread.currentThread().equals(this.thread))
             throw new IllegalStateException("Infinite: join on itself");
-        if (isRunning) stop();
+        stop();
         this.thread.join();
         this.thread = null;
     }

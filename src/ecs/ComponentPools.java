@@ -1,6 +1,6 @@
 package ecs;
 
-import ecs.util.Container;
+import ecs.util.containers.Container;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +35,21 @@ public class ComponentPools {
         pool.register(manager.control,type);
     }
 
+    /**
+     * Called on ComponentManager Termination. Will clear all pools, nullifying components.
+     * This is done after all entities are deleted.
+     */
+    protected void clearItems() {
+        pools.iterate(item -> item.clear(false));
+
+    }
+
+    /**
+     * Nullifies the pool containers
+     */
+    protected void nullifyPools() {
+        pools.clear();
+    }
 
     /**
      * Tries to return the component to a pool if the type has one.
@@ -108,7 +123,7 @@ public class ComponentPools {
             return 0;
         int count = 0;
         for (ComponentType type: types)
-            count += inPool(type);
+            count += pools.get(type.id()).size();
         return count;
     }
 
@@ -117,7 +132,16 @@ public class ComponentPools {
             return 0;
         long count = 0;
         for (ComponentType type: types)
-            count += obtained(type);
+            count += pools.get(type.id()).obtained();
+        return count;
+    }
+
+    protected long discardedTotal() {
+        if (types.isEmpty())
+            return 0;
+        long count = 0;
+        for (ComponentType type: types)
+            count += pools.get(type.id()).discarded();
         return count;
     }
 
@@ -126,9 +150,11 @@ public class ComponentPools {
             return 1f;
         int capacity = 0;
         int count = 0;
+        ComponentPool<? extends Component> pool;
         for (ComponentType type: types) {
-            capacity += capacity(type);
-            count += inPool(type);
+            pool = pools.get(type.id());
+            capacity += pool.capacity();
+            count += pool.size();
         }
         // capacity would never be zero
         return (float) count / capacity;

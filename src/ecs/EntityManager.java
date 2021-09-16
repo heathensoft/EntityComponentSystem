@@ -1,6 +1,6 @@
 package ecs;
 
-import ecs.util.Container;
+import ecs.util.containers.Container;
 
 
 /**
@@ -134,7 +134,7 @@ public class EntityManager {
      * Note: Entities marked as dirty without components, will be deleted after clean.
      * Deleting an entity is equivalent of removing all it's components and vice-versa.
      */
-    protected void clean() {
+    protected void clean() {  // make synchronized?
         if (dirty.notEmpty()) {
             final Container<EntitySystem> systems = ecs.systemManager.systems;
             final int systemCount = systems.itemCount();

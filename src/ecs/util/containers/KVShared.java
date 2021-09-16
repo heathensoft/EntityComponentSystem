@@ -1,6 +1,6 @@
-package ecs.util;
+package ecs.util.containers;
 
-import ecs.util.exceptions.KeyStateConflictException;
+import ecs.util.containers.exceptions.KeyStateConflictException;
 
 /**
  * KeyValue implementation for objects potentially inhabiting more than one KVArray.
@@ -13,7 +13,7 @@ import ecs.util.exceptions.KeyStateConflictException;
  * are pooled and reused, so on average I would suspect the sizes growing to some natural equilibrium.
  * For the ECS application, this natural point would be highly determined by the number of EntitySystems.
  *
- * I will (probably) eventually create more specialized implementations to minimize overhead.
+ * I could eventually create more specialized implementations to minimize overhead.
  *
  * @author Frederik Dahl
  * 23/08/2021

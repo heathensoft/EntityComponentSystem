@@ -1,7 +1,7 @@
 package ecs;
 
 
-import ecs.util.KVShared;
+import ecs.util.containers.KVShared;
 
 /**
  * @author Frederik Dahl

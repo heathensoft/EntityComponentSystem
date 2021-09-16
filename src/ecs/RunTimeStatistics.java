@@ -1,6 +1,13 @@
 package ecs;
 
 /**
+ *
+ * This is the "hub" for ECS statistics. Contains getters only.
+ * Query stats directly or in separate thread, using Diagnostics.
+ * Running diagnostics is the purpose of this class.
+ * It's thread safe, but may be inaccurate by a couple of frames.
+ * No methods here should interrupt or cause issues in the ECS main-thread.
+ *
  * @author Frederik Dahl
  * 09/09/2021
  */
@@ -17,9 +24,9 @@ public class RunTimeStatistics {
     }
 
 
-    // add synchronized to methods looping / querying anything. Or at least think it through. where should the sync be etc.
+    // Entities
 
-    public int entitiesActive() { return ecs.entityManager.entities(); }
+    public int entitiesActive() {return ecs.entityManager.entities(); }
 
     public long entitiesCreated() { return ecs.entityManager.entitiesCreated(); }
 
@@ -28,33 +35,35 @@ public class RunTimeStatistics {
     public int entitiesInMemory() { return ecs.entityManager.entitiesInMemory(); }
 
 
+    // Components (pools and containers)
+
     public int componentsActive() { return ecs.componentManager.componentsActive(); }
 
     public int componentsPooled() { return ecs.componentManager.pools.inPoolTotal(); }
 
     public int componentsPooled(ComponentType type) { return ecs.componentManager.pools.inPool(type); }
 
-    public long componentsObtained() { return 0; }
+    public long componentsObtained() { return ecs.componentManager.pools.obtainedTotal(); }
 
-    public int componentsObtained(ComponentType type) { return 0; }
+    public long componentsObtained(ComponentType type) { return ecs.componentManager.pools.obtained(type); }
 
-    public float componentPoolsLoadFactor() { return 0; }
+    public float componentPoolsLoadFactor() { return ecs.componentManager.pools.loadFactorAll(); }
 
-    public float componentPoolLoadFactor(ComponentType type) { return 0; }
+    public float componentPoolLoadFactor(ComponentType type) { return ecs.componentManager.pools.loadFactor(type); }
 
-    public float componentContainersLoadFactor() { return 0; }
+    public float componentContainersLoadFactor() { return ecs.componentManager.getContainersLoadFactor(); }
 
-    public float componentContainerLoadFactor(ComponentType type) { return 0; }
+    public float componentContainerLoadFactor(ComponentType type) { return ecs.componentManager.getContainerLoadFactor(type); }
 
     public long componentsAdded() { return ecs.componentManager.componentsAdded(); }
 
     public long componentsRemoved() { return ecs.componentManager.componentsRemoved(); }
 
-    public long componentsDiscarded() { return 0; }
+    public long componentsDiscarded() { return ecs.componentManager.pools.discardedTotal(); }
 
     public long componentsDiscarded(ComponentType type) { return ecs.componentManager.pools.discarded(type); }
 
-    public long componentsLost() { return 0; }
+    public long componentsLost() { return ecs.componentManager.componentsLost(); }
 
     public int componentsInMemory() { return componentsActive() + componentsPooled(); }
 
@@ -63,6 +72,10 @@ public class RunTimeStatistics {
     public int poolRefits() { return ecs.componentManager.poolRefits(); }
 
     public int containerRefits() { return ecs.componentManager.containerRefits(); }
+
+
+
+
 
     private int memoryUsageMB() {
         Runtime runtime = Runtime.getRuntime();

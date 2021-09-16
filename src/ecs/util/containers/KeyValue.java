@@ -1,6 +1,6 @@
-package ecs.util;
+package ecs.util.containers;
 
-import ecs.util.exceptions.KeyStateConflictException;
+import ecs.util.containers.exceptions.KeyStateConflictException;
 
 /**
  * @author Frederik Dahl

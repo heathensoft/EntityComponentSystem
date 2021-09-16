@@ -43,20 +43,35 @@ public class ECS {
 
     }
 
-    public synchronized void runDiagnostics(Diagnostics diagnostics) {
+    public synchronized void setDiagnostics(Diagnostics diagnostics) {
         if (diagnostics == null)
             throw new IllegalArgumentException("null argument");
-        if (this.diagnostics != null) {
-            try {
-                this.diagnostics.awaitTermination();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        stopDiagnostics();
         this.diagnostics = diagnostics;
         diagnostics.set(runTimeStatistics);
-        new Thread(diagnostics).start();
     }
+
+    public synchronized void runDiagnostics() {
+        if (diagnostics != null) {
+            terminateDiagnostics();
+            new Thread(diagnostics).start();
+        }
+    }
+
+    public synchronized void stopDiagnostics() {
+        if (diagnostics != null) {
+            terminateDiagnostics();
+        }
+    }
+
+    private void terminateDiagnostics() {
+        try {
+            diagnostics.awaitStop();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void registerSystem(EntitySystem system) {
         if (initialized) throw new IllegalStateException("Register systems before ECS initialization");
@@ -98,21 +113,20 @@ public class ECS {
      *
      * 1. Removes all components from entities.
      * 2. Cleaning / revalidating all entities, removing them from all systems.
-     * 3. Deletes all entities from the EntityManager.
-     * 4. MemoryManager prints lifecycle stats.
-     * 5. Terminates all managers.
-     *      Clears pools and containers.
-     *      Nullifying of references.
-     * 6. Garbage Collection
+     * 3. Deletes all entities from the EntityManager. Clearing the pool.
+     * 4. Clears all component pools and containers.
+     * 5. Terminating Diagnostics if running. Waiting for it to finish.
+     * 6. Nullifying component pools and containers.
+     * 6. Garbage Collection is triggered
      *
      */
     public void terminate() {
-
-        systemManager.terminate();
         entityManager.terminate();
-
-        componentManager.terminate();
-        System.gc(); // The only place the ECS invokes gc()
+        componentManager.clearContainers();
+        systemManager.terminate();
+        stopDiagnostics();
+        componentManager.nullify();
+        System.gc();
     }
 
 

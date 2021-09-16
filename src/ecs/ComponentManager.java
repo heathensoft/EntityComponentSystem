@@ -1,6 +1,6 @@
 package ecs;
 
-import ecs.util.Container;
+import ecs.util.containers.Container;
 
 import java.util.List;
 
@@ -49,8 +49,19 @@ public class ComponentManager {
     protected void update(float dt) {
         control.check(dt);
     }
+    // this is happening after entityManager termination.
+    protected void clearContainers() {
+        components.iterate(item -> {
+            if (item.notEmpty()) // check containers are empty
+                throw new IllegalStateException("Containers should be empty atp");
+        });
+        pools.clearItems();
 
-    protected void terminate() {
+    }
+
+    protected void nullify() { // do this after diagnostics await Termination;
+        components.clear();
+        pools.nullifyPools();
 
     }
 

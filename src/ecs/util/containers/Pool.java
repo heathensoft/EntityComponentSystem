@@ -1,4 +1,4 @@
-package ecs.util;
+package ecs.util.containers;
 
 /**
  * @author Frederik Dahl

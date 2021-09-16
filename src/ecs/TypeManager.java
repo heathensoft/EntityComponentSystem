@@ -1,6 +1,6 @@
 package ecs;
 
-import ecs.util.Container;
+import ecs.util.containers.Container;
 
 import java.util.ArrayList;
 import java.util.HashMap;

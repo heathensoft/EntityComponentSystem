@@ -1,6 +1,6 @@
 package ecs;
 
-import ecs.util.Pool;
+import ecs.util.containers.Pool;
 
 /**
  * ComponentPool

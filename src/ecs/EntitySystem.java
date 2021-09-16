@@ -1,7 +1,7 @@
 package ecs;
 
 
-import ecs.util.KVArray;
+import ecs.util.containers.KVArray;
 
 /**
  *
@@ -37,7 +37,7 @@ public abstract class EntitySystem {
      * @param e the entity e to be revalidated by the system
      */
 
-    // this setup should have the least logical operations for the most common-case revalidation call.
+    // this setup should have the least possible operations. Using positive operators only :)
     // 1.   if the entity is disabled, we only need to check if it is in the system. If it is, remove it.
     // 2.   in the case enabled == true, we first check the status-quo to see if we can return immediately.
     //      status-quo being: its both in the system and has the required components. OR the opposite.
@@ -47,9 +47,8 @@ public abstract class EntitySystem {
 
     protected final void revalidate(Entity e) {
         final boolean inSystem = e.inSystem(systemBit);
-        final boolean hasComponents = group.containsAll(e.components());
         if (e.isEnabled()) {
-            if (inSystem == hasComponents) return;
+            if (inSystem == group.containsAll(e.components())) return;
             if (inSystem) removeEntity(e);
             else addEntity(e);
         } else if (inSystem) removeEntity(e);
@@ -79,6 +78,11 @@ public abstract class EntitySystem {
         }
     }
 
+    /**
+     * This is called on SystemManager Termination.
+     * All entities in the system has already been removed atp.
+     * There is no need to clear the entities.
+     */
     protected void terminate() {
 
     }

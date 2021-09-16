@@ -1,4 +1,4 @@
-package ecs.util.exceptions;
+package ecs.util.containers.exceptions;
 
 /**
  * KeyStateConflictException is an exception to indicate that an Array / Item provides some key / id with

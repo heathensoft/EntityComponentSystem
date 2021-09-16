@@ -1,4 +1,4 @@
-package ecs.util.exceptions;
+package ecs.util.containers.exceptions;
 
 public class EmptyCollectionException extends RuntimeException {
 

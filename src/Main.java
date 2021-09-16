@@ -1,7 +1,10 @@
-import ecs.Entity;
 import ecs.util.*;
+import ecs.util.containers.Container;
+import ecs.util.containers.Iterator;
+import ecs.util.containers.KVArray;
+import ecs.util.containers.KVSingle;
+import ecs.util.time.DeltaLoop;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -158,6 +161,11 @@ public class Main {
          */
 
 
+
+
+        DeltaLoop deltaLoop = new DeltaLoop(System.out::println, 0.5);
+        deltaLoop.initialize();
+        while (true) deltaLoop.update();
 
     }
 
