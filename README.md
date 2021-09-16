@@ -8,30 +8,72 @@ This is a module for a game engine I am working on:
 
 
 There are more than a few ways to design an ECS. And being written in Java, you can't really
-manage caching / memory like you could do with languages like C or C++.
-Where you could keep components tightly stacked next to each other i memory, to increase performance.
+manage caching / memory in the same way you could do with languages like C or C++.
 
 Even without this control, it still makes creating elements for interactive applications more manageable.
-Instead of inheritance you have "entities" with components.
-If you want your entity to be able to fly, you might give it the flying component.
-The flying component could have a layout like this:
+In short, instead of inheritance you have "entities" with a set of components.
+Making it easier to create and change objects, by just adding or removing components.
+Also eliminating common inheritance related... issues:
+
+Let's say you start an inheritance tree structure with "Animal" being the absolute super.
+Somewhere down the tree you make a separation between something like flying and non-flying,
+or maybe you call them Avians and Mammals. You are kinda stuck with your choice of abstraction.
+They are now separated. You might even have spent an entire afternoon trying figure out
+how the inheritance structure should be set up. If you eventually want a specific land-animal
+having some bird like quality from a subset of the Avians.
+You would need to rethink your abstraction. Maybe just reuse the code from the avian-subset.
+Maybe the choice of abstraction wasn't good enough in the first place,
+or maybe you could just have it implement an interface to represent the wanted ability.
+Maybe the subset of birds is better off just implementing that interface as well.
+That's logical. What about invertebrates? Flying fish? 
+
+It would be nice just not thinking about that. Anything can fly if you just gave it the ability.
+You could, at run-time alter the same entity from a UI menu-item to a trebuchet, doctor or both.
+
+### The implementation
+In some ECS implementations the entity would be the container for its components. But for
+this ECS the entities are separated from its components altogether. Keeping instead the components
+together in arrays. The entity then, would be the key to look them up.
+
+In Java, having the entities be containers for its components might be a better idea. Since,
+again you have no real control over where the components are stored in memory.
+But I still wanted to try the "Structure of Arrays" approach for science.
+Either way, both implementations are valid.
 
 
-public class Flying implements Component
+#### What are components?
+Components are just containers of data. They have no functionality. In this ECS,
+the base class Component is just an empty Interface.
 
-    int altitude;
-    float verticalForce;
+
+public class Transform implements Component
+
+    Vector2 scale;
+    Vector3 position;
+    float rotation;
 
 
-When adding a component, the entity (basically an id) will be added to systems that are interested
-in flying components. Components are data and systems process that data.
-A rendering system might need a Sprite component and a Transform component.
-Any entity meeting those requirements will be added to the system.
-It does not matter what abstractions you impose on an entity. If you add a Flying component to
-a Fish or a UI-button it has the potential to fly. And you can do this at runtime.
-So a Fish is just a collection of properties, if you remove some components and add some other
-that same entity is a trebuchet. You get the idea. It's modularity, not inheritance.
-So that's an ECS in a nutshell.
+#### What are systems?
+
+Systems are the processors of components. This is where the logic is implemented.
+One system might operate on position and velocity (write).
+Another might operate on position and texture (read).
+
+    
+    entities.iterate(process(e))
+
+    @Override
+    process(Entity e) {
+        Sprite sprite = spriteComponents.get(e);
+        Transform transform = transformComponents.get(e);
+        batch.draw(sprite,transform)
+    }
+
+When enabling/disabling/deleting an entity or adding/removing components from it.
+The entity gets revalidated by each system. Gets kept/removed or added dependant
+of the specific system requirements.
+
+Modularity, not inheritance.
 
 Core design principles:
 
