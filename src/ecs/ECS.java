@@ -10,10 +10,6 @@ package ecs;
 
 public class ECS {
 
-    // todo:
-    // Could eventually also manage threads for Systems. Some Runnable-provider Manager
-    // Diagnostics has its own thread. I can see AI-Systems / pathfinding using concurrency
-
     protected final RunTimeStatistics runTimeStatistics;
     protected final ComponentManager componentManager;
     protected final SystemManager systemManager;

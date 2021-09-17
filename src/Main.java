@@ -1,9 +1,9 @@
-import ecs.util.*;
+import ecs.util.IntStack;
 import ecs.util.containers.Container;
 import ecs.util.containers.Iterator;
 import ecs.util.containers.KVArray;
 import ecs.util.containers.KVSingle;
-import ecs.util.time.DeltaLoop;
+import ecs.util.time.TimedTask;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -160,12 +160,16 @@ public class Main {
         System.out.println("\"");
          */
 
+        System.out.println(Long.MAX_VALUE);
+        new Thread(new TimedTask(1,0.001) {
+            @Override
+            public void update(double dt) {
+                System.out.println(dt);
+            }
+        }).start();
 
 
 
-        DeltaLoop deltaLoop = new DeltaLoop(System.out::println, 0.5);
-        deltaLoop.initialize();
-        while (true) deltaLoop.update();
 
     }
 

@@ -13,12 +13,11 @@ manage caching / memory in the same way you could do with languages like C or C+
 Even without this control, it still makes creating elements for interactive applications more manageable.
 In short, instead of inheritance you have "entities" with a set of components.
 Making it easier to create and change objects, by just adding or removing components.
-Also eliminating common inheritance related... issues:
 
 Let's say you start an inheritance tree structure with "Animal" being the absolute super.
 Somewhere down the tree you make a separation between something like flying and non-flying,
 or maybe you call them Avians and Mammals. You are kinda stuck with your choice of abstraction.
-They are now separated. You might even have spent an entire afternoon trying figure out
+They are now separated. You might have spent the afternoon trying figure out
 how the inheritance structure should be set up. If you eventually want a specific land-animal
 having some bird like quality from a subset of the Avians.
 You would need to rethink your abstraction. Maybe just reuse the code from the avian-subset.
@@ -27,8 +26,8 @@ or maybe you could just have it implement an interface to represent the wanted a
 Maybe the subset of birds is better off just implementing that interface as well.
 That's logical. What about invertebrates? Flying fish? 
 
-It would be nice just not thinking about that. Anything can fly if you just gave it the ability.
-You could, at run-time alter the same entity from a UI menu-item to a trebuchet, doctor or both.
+It would be nice not to think about that. Anything can fly if you just gave it the ability.
+You could, at run-time alter the same entity from a menu-button to a trebuchet, doctor or both.
 
 ### The implementation
 In some ECS implementations the entity would be the container for its components. But for

@@ -100,7 +100,7 @@ public abstract class Diagnostics implements Runnable {
     /**
      * Not used by the ECS
      */
-    public synchronized void stop() {
+    protected synchronized void stop() {
         running = false;
     }
 
