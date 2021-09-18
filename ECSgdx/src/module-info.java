@@ -1,4 +1,4 @@
-module LibgdxECS {
+module ECSgdx {
 
     requires ECS;
     requires gdx;

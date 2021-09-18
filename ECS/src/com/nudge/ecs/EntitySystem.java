@@ -21,12 +21,24 @@ public abstract class EntitySystem {
 
 
     public EntitySystem(ComponentGroup group, int initialCapacity) {
-        entities = new KVArray<>(initialCapacity);
+        this.entities = new KVArray<>(initialCapacity);
         this.group = group;
     }
 
-    protected final void set(ECS ecs) {
+    protected final void set(long bit, ECS ecs) {
+        this.systemBit = bit;
         this.ecs = ecs;
+        this.activate();
+    }
+
+
+    public final void update(float dt) {
+        if (activated) {
+            ecs.entityManager.clean();
+            begin();
+            process(dt);
+            end();
+        }
     }
 
     /**
@@ -57,51 +69,48 @@ public abstract class EntitySystem {
     private void addEntity(Entity e) {
         e.addSystem(systemBit);
         entities.add(e);
+        entityAdded(e);
     }
 
     private void removeEntity(Entity e) {
         e.removeSystem(systemBit);
         entities.remove(e);
-    }
-    
-
-    protected void initialize() {
-
+        entityRemoved(e);
     }
 
-    public final void update(float dt) {
-        if (activated) {
-            ecs.entityManager.clean();
-            begin();
-            process(dt);
-            end();
-        }
-    }
+    protected void entityAdded(Entity e) {}
+
+    protected void entityRemoved(Entity e) {}
+
+    protected void initialize() {}
 
     /**
      * This is called on SystemManager Termination.
      * All entities in the system has already been removed atp.
      * There is no need to clear the entities.
      */
-    protected void terminate() {
+    protected void terminate() {}
 
-    }
-
-    protected void begin() {
-
-    }
+    protected void begin() {}
 
     protected abstract void process(float dt);
 
+    protected void end() {}
 
-    protected void end() {
 
+    protected ECS ecs() {
+        return ecs;
     }
 
     protected KVArray<Entity> entities() {
         return entities;
     }
-    
+
+    protected long getSystemBit() {
+        return systemBit;
+    }
+
+
     public void activate() {
         activated = true;
     }
@@ -112,14 +121,6 @@ public abstract class EntitySystem {
 
     public boolean isActivated() {
         return activated;
-    }
-
-    protected void setSystemBit(long bit) {
-        this.systemBit = bit;
-    }
-
-    protected long getSystemBit() {
-        return systemBit;
     }
 
     public ComponentGroup getGroup() {

@@ -128,7 +128,7 @@ public class EntityManager {
     /**
      * "Cleans" entities marked as dirty.
      * (Adding/removing components to/from an entity marks it as dirty)
-     * This gets called at the end of each EntitySystems' process-loop.
+     * This gets called at the beginning of each EntitySystems' process-loop.
      * Any dirty entities will get revalidated by each EntitySystem registered by the ECS.
      *
      * Note: Entities marked as dirty without components, will be deleted after clean.
@@ -136,7 +136,7 @@ public class EntityManager {
      */
     protected void clean() {  // make synchronized?
         if (dirty.notEmpty()) {
-            final Container<EntitySystem> systems = ecs.systemManager.systems;
+            final Container<ECSystem> systems = ecs.systemManager.systems;
             final int systemCount = systems.itemCount();
             final int dirtyCount = dirty.itemCount();
             for (int i = 0; i < dirtyCount; i++) {

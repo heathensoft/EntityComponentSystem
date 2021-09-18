@@ -37,7 +37,7 @@ public class ECS {
     }
 
 
-    public void registerSystem(EntitySystem system) {
+    public void registerSystem(ECSystem system) {
         if (initialized) throw new IllegalStateException("Register systems before ECS initialization");
         systemManager.register(system);
     }
@@ -47,7 +47,7 @@ public class ECS {
         componentManager.registerPool(pool,clazz);
     }
 
-    public <T extends EntitySystem> T getSystem(Class<T> systemClass) {
+    public <T extends ECSystem> T getSystem(Class<T> systemClass) {
         return systemManager.getSystem(systemClass);
     }
 
@@ -85,6 +85,8 @@ public class ECS {
      *
      */
     public void terminate() {
+        systemManager.deactivateSystems();
+        // stop and join system threads if any
         entityManager.terminate();
         componentManager.clearContainers();
         systemManager.terminate();

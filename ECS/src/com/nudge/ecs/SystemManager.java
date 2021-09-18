@@ -14,9 +14,9 @@ import java.util.Map;
 
 public class SystemManager {
 
-    private final Map<Class<? extends EntitySystem>, Long> systemBits;
-    private final Map<Class<? extends EntitySystem>, EntitySystem> systemsMap;
-    protected final Container<EntitySystem> systems;
+    private final Map<Class<? extends ECSystem>, Long> systemBits;
+    private final Map<Class<? extends ECSystem>, ECSystem> systemsMap;
+    protected final Container<ECSystem> systems;
     private int bitGen = 0;
 
     private final ECS ecs;
@@ -31,33 +31,35 @@ public class SystemManager {
 
     protected void initializeSystems() {
         systems.fit(true);
-        systems.iterate(EntitySystem::initialize);
+        systems.iterate(ECSystem::initialize);
     }
 
+    protected void deactivateSystems() {
+        systems.iterate(ECSystem::deactivate);
+    }
 
     protected void terminate() {
-        systems.iterate(EntitySystem::terminate);
+        systems.iterate(ECSystem::terminate);
         systems.clear();
         systemsMap.clear();
     }
 
-    protected void register(EntitySystem system) {
+    protected void register(ECSystem system) {
         if (system == null) throw new IllegalStateException("attempted to register null System");
-        Class<? extends EntitySystem> c = system.getClass();
+        Class<? extends ECSystem> c = system.getClass();
         if (systemsMap.get(c) == null) {
-            system.setSystemBit(getBit(c));
-            system.set(ecs); // maybe nudge.ecs instead of entityManager
+            system.set(getBit(c),ecs);
             systems.push(system);
             systemsMap.put(c,system);
         }
     }
 
-    protected <T extends EntitySystem> T getSystem(Class<T> c) {
+    protected <T extends ECSystem> T getSystem(Class<T> c) {
         return c.cast(systemsMap.get(c));
     }
 
 
-    protected long getBit(Class<? extends EntitySystem> c) {
+    private long getBit(Class<? extends ECSystem> c) {
         Long flag = systemBits.get(c);
         if(flag == null){
             flag = 1L << bitGen++;

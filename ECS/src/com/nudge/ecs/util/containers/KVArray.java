@@ -227,7 +227,7 @@ public class KVArray<E extends KeyValue> {
         return count > 0;
     }
 
-    private int size() {
+    public int size() {
         return count;
     }
 

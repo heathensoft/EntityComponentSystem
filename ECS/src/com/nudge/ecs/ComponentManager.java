@@ -184,7 +184,7 @@ public class ComponentManager {
         return components.get(typeID).get(entityID);
     }
 
-    public Component getComponent(Entity e, ComponentType t) {
+    protected Component getComponent(Entity e, ComponentType t) {
         return getComponent(e.id(), t.id());
     }
 
