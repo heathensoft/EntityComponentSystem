@@ -3,6 +3,9 @@ package com.nudge.ecs;
 
 import com.nudge.ecs.util.containers.Container;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Frederik Dahl
  * 22/08/2021
@@ -12,10 +15,10 @@ import com.nudge.ecs.util.containers.Container;
 public class EntityManager {
 
     private final ECS ecs;
-
     private final Container<Entity> entities;
     private final Container<Entity> dirty;
     private final EntityPool pool;
+    private final Object cleanLock = new Object();
 
 
     protected EntityManager(ECS ecs, int initialCapacity, int maxPoolSize) {
@@ -29,7 +32,7 @@ public class EntityManager {
 
 
     protected void terminate() {
-        entities.iterate(this::remove);
+        entities.iterate(this::remove); // synchronized in loop
         clean();
         // entities and dirty should be empty atp.
         // so should all the systems' KVArrays
@@ -39,10 +42,18 @@ public class EntityManager {
     }
 
 
-    public Entity create() {
+    public synchronized Entity create() {
         Entity e = pool.obtain();
         entities.set(e,e.id());
         return e;
+    }
+
+    public synchronized List<Entity> create(List<Entity> list, int n) {
+        for (int i = 0; i < n; i++) {
+            Entity e = pool.obtain();
+            list.add(e);
+            entities.set(e,e.id());
+        } return list;
     }
 
     /**
@@ -56,13 +67,13 @@ public class EntityManager {
      *
      * @param e the entity to remove
      */
-    public void remove(Entity e) {
+    public synchronized void remove(Entity e) {
         if (e.hasAnyComponent())
             ecs.componentManager.removeAll(e);
         refresh(e);
     }
 
-    public void addComponents(Entity e, Component... components) {
+    public synchronized void addComponents(Entity e, Component... components) {
         boolean shouldRefresh = false;
         for (Component c : components) {
             if (ecs.componentManager.addComponent(e, c))
@@ -71,27 +82,27 @@ public class EntityManager {
         if (shouldRefresh) refresh(e);
     }
 
-    public void addComponent(Entity e, Component c) {
+    public synchronized void addComponent(Entity e, Component c) {
         if (ecs.componentManager.addComponent(e,c))
             refresh(e);
     }
 
-    public void removeComponent(Entity e, ComponentType t) {
+    public synchronized void removeComponent(Entity e, ComponentType t) {
         if (ecs.componentManager.removeComponent(e,t))
             refresh(e);
     }
 
-    public void removeComponent(Entity e, Component c) {
+    public synchronized void removeComponent(Entity e, Component c) {
         if (ecs.componentManager.removeComponent(e,c))
             refresh(e);
     }
 
-    public void disable(Entity e) {
+    public synchronized void disable(Entity e) {
         if (e.isEnabled()) refresh(e);
         e.disable();
     }
 
-    public void enable(Entity e) {
+    public synchronized void enable(Entity e) {
         if (!e.isEnabled()) refresh(e);
         e.enable();
     }
@@ -103,7 +114,7 @@ public class EntityManager {
      *
      * @param e the entity to refresh
      */
-    public void refresh(Entity e) {
+    private void refresh(Entity e) {
         if (e.isDirty()) return;
         dirty.push(e);
         e.markAsDirty();
@@ -134,20 +145,37 @@ public class EntityManager {
      * Note: Entities marked as dirty without components, will be deleted after clean.
      * Deleting an entity is equivalent of removing all it's components and vice-versa.
      */
-    protected void clean() {  // make synchronized?
-        if (dirty.notEmpty()) {
-            final Container<ECSystem> systems = ecs.systemManager.systems;
-            final int systemCount = systems.itemCount();
-            final int dirtyCount = dirty.itemCount();
-            for (int i = 0; i < dirtyCount; i++) {
-                Entity e = dirty.get(i);
-                for (int j = 0; j < systemCount; j++)
-                    systems.get(j).revalidate(e);
-                e.markAsClean();
-                if (!e.hasAnyComponent())
-                    delete(e);
-            }dirty.clear();
+    protected void clean() {
+        synchronized (cleanLock) {
+            if (dirty.notEmpty()) {
+                final Container<ECSystem> systems = ecs.systemManager.systems;
+                final int systemCount = systems.itemCount();
+                final int dirtyCount = dirty.itemCount();
+                ArrayList<Entity> toBeDeleted = null;
+                for (int i = 0; i < dirtyCount; i++) {
+                    Entity e = dirty.get(i);
+                    for (int j = 0; j < systemCount; j++)
+                        systems.get(j).revalidate(e);
+                    e.markAsClean();
+                    if (!e.hasAnyComponent()) {
+                        if (toBeDeleted == null)
+                            toBeDeleted = new ArrayList<>();
+                        toBeDeleted.add(e);
+                    }
+                }
+                if (toBeDeleted != null)
+                    delete(toBeDeleted);
+                clearDirty();
+            }
         }
+    }
+
+    private synchronized void clearDirty() {
+        dirty.clear();
+    }
+
+    private synchronized void delete(List<Entity> entities) {
+        for (Entity e: entities) delete(e);
     }
 
     private void delete(Entity e) {

@@ -21,8 +21,8 @@ public abstract class ECSystem {
     private final Container<Entity> waitToAdd = new Container<>();
     private final Container<Entity> waitToRemove = new Container<>();
     private final ComponentGroup group;
-    private boolean activated;
-    private boolean processing;
+    private volatile boolean activated;
+    private volatile boolean processing;
     private long systemBit;
 
 
@@ -122,14 +122,12 @@ public abstract class ECSystem {
             entities.add(e);
             entityAdded(e);
         }
-
     }
 
     private void removeEntity(Entity e) {
         e.removeSystem(systemBit);
-        if (processing) {
+        if (processing)
             waitToRemove.push(e);
-        }
         else {
             entities.remove(e);
             entityRemoved(e);
@@ -170,11 +168,11 @@ public abstract class ECSystem {
      * Since any calls to entityManager.clean() happens before every ECSystem entity processing.
      * But if it should happen, the entities are put in "waiting queues" that are handled
      * straight after processing (this method). The entities are also checked to see if no
-     * state-change has happened during the time in waiting. I cannot imagine this would happen.
+     * state-change has happened during the time in waiting. I doubt this would happen.
      * But it theoretically could. Perhaps it was added or removed again while waiting.
      * Either way, its state is double-checked and handled appropriately.
-     *
      */
+
     protected void handleWaiting() {
 
         while (waitToAdd.notEmpty()) {
@@ -196,7 +194,6 @@ public abstract class ECSystem {
     protected KVArray<Entity> getEntities() {
         return entities;
     }
-
 
     public void activate() {
         activated = true;
