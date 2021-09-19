@@ -71,7 +71,7 @@ public abstract class KVShared implements KeyValue {
         for (int i = 0; i < kvCount; i++) {
             if (kvArrID[i] == targetArray) {
                 kvKeys[i] = kvArrID[i] = NONE;
-                kvCount--;
+                //kvCount--;
                 return;
             }
         }throw new KeyStateConflictException("Item is not registered to inhabit the caller");
