@@ -15,35 +15,34 @@ import com.nudge.ecs.util.containers.KVArray;
 
 public abstract class ECSystem {
 
-    private ECS ecs;
+    private final ECS ecs;
     private final KVArray<Entity> entities;
     private final Iterator<Entity> itr = this::processEntity;
     private final Container<Entity> waitToAdd = new Container<>();
     private final Container<Entity> waitToRemove = new Container<>();
     private final ComponentGroup group;
-    private volatile boolean activated;
-    private volatile boolean processing;
+    private boolean activated;
+    private boolean processing;
     private long systemBit;
 
 
-    public ECSystem(int initialCapacity, ComponentGroup group) {
+    public ECSystem(ECS ecs, ComponentGroup group, int initialCapacity) {
         this.entities = new KVArray<>(initialCapacity);
         this.group = group;
+        this.ecs = ecs;
     }
 
-    public ECSystem(ComponentGroup group) {
-        this(16,group);
+    public ECSystem(ECS ecs, ComponentGroup group) {
+        this(ecs,group,16);
     }
 
 
     /**
      * Called when registered in the ECS
      * @param bit the assigned system-bit
-     * @param ecs the ECS
      */
-    protected final void set(long bit, ECS ecs) {
+    protected final void set(long bit) {
         this.systemBit = bit;
-        this.ecs = ecs;
         this.activate();
     }
 
