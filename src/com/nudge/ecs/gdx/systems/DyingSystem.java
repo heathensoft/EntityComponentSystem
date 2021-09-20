@@ -24,9 +24,8 @@ public class DyingSystem extends ECSystem {
     @Override
     protected void processEntity(Entity e, float dt) {
         Dying d = dyingComponents.get(e);
-        d.timeToDie -= dt;
-        if (d.timeToDie < 0)
+        if ((d.timeLeft -= dt) < 0)
             getEcs().entityManager().remove(e);
-
     }
+
 }

@@ -10,6 +10,7 @@ import com.nudge.ecs.Entity;
 import com.nudge.ecs.Getter;
 import com.nudge.ecs.gdx.components.Body;
 import com.nudge.ecs.gdx.components.Collider;
+import com.nudge.ecs.gdx.components.Dying;
 import com.nudge.ecs.gdx.components.Velocity;
 import com.nudge.ecs.gdx.util.Point;
 import com.nudge.ecs.gdx.util.QuadTree;
@@ -78,13 +79,19 @@ public class CollisionSystem extends ECSystem {
                     final float dist = dx * dx + dy * dy;
                     final float rSum = b1.radius + b2.radius;
 
-                    if (dist < rSum * rSum) {
+                    if (dist < rSum * rSum) { // if we have an actual collision;
                         Velocity v = velocityComponents.getUnsafe(e);
                         tmp.set(eX - oX, eY - oY);
                         tmp.nor().scl(v.speed);
                         v.velocity.set(tmp);
 
-
+                        if (!b1.infected) {
+                            if (b1.vulnerable && b2.infected) {
+                                b1.infected = true;
+                                b1.color = Body.RED;
+                                getEcs().entityManager().addComponent(e,new Dying());
+                            }
+                        }
                     }
                 }
             }

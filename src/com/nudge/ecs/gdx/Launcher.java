@@ -17,16 +17,14 @@ public class Launcher {
     public static void main(String[] args) {
 
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-        config.width = 1920;
-        config.height = 1080;
-        config.resizable = false;
+        config.width = 1280;
+        config.height = 720;
+        config.resizable = true;
         config.vSyncEnabled = false;
         config.foregroundFPS = 0;
         config.backgroundFPS = 0;
 
-        new LwjglApplication(
-
-                new ApplicationAdapter() {
+        new LwjglApplication(new ApplicationAdapter() {
 
             Simulation simulation;
 
@@ -44,6 +42,7 @@ public class Launcher {
             public void dispose() {
                 simulation.dispose();
             }
+
         }, config);
 
     }

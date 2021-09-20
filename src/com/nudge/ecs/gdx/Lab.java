@@ -23,6 +23,10 @@ public class Lab {
      private final EntityManager manager;
      private final Random rnd;
 
+     private final float speed = 30.0f;
+     private final int maxRadius = 3;
+     public final static int TIME_TO_DIE = 3;
+
      public Lab(EntityManager entityManager){
           this.manager = entityManager;
           this.rnd = new Random();
@@ -37,7 +41,7 @@ public class Lab {
                   true);
           Velocity velocity = new Velocity(
                   rnd.nextFloat(),
-                  10);
+                  speed);
           manager.addComponents(e,
                   body,
                   new Collider(),
@@ -46,6 +50,7 @@ public class Lab {
      }
 
      public void createVulnerable(int amount) {
+          amount = Math.max(1,amount);
           for (int i = 0; i < amount; i++) {
                Entity e = manager.create();
                Body body = new Body(
@@ -55,7 +60,7 @@ public class Lab {
                        false);
                Velocity velocity = new Velocity(
                        rnd.nextFloat(),
-                       30);
+                       speed);
                manager.addComponents(e,
                        body,
                        new Collider(),
@@ -65,6 +70,7 @@ public class Lab {
      }
 
      public void createImmune(int amount) {
+          amount = Math.max(1,amount);
           for (int i = 0; i < amount; i++) {
                Entity e = manager.create();
                Body body = new Body(
@@ -74,7 +80,7 @@ public class Lab {
                        false);
                Velocity velocity = new Velocity(
                        rnd.nextFloat(),
-                       10);
+                       speed);
                manager.addComponents(e,
                        body,
                        new Collider(),
@@ -89,7 +95,7 @@ public class Lab {
      }
 
      private float rngRadius() {
-          return MathUtils.random(3);
+          return Math.max(MathUtils.random(maxRadius),1);
      }
 
      public Vector2 rngPos() {

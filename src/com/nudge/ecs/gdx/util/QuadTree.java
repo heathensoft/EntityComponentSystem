@@ -4,6 +4,18 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
+/**
+ * A quadtree used for collision checks.
+ * With this, "particles" only need to check their immediate surroundings for collision.
+ * Making checks a lot faster.
+ *
+ * This is not optimized, and you have to rebuild the entire tree on each frame.
+ * But it does its job.
+ *
+ * @author Frederik Dahl
+ * 2019
+ */
+
 public class QuadTree<E> {
 
     private final float x,y,w,h;
@@ -85,7 +97,7 @@ public class QuadTree<E> {
         }
     }
 
-    // a "utils.quadtree1.Point" can't inhabit than one region
+    // a "Point" can't inhabit than one region
     private boolean contains(float px, float py) {
         return x <= px && x + w > px && y <= py && y + h > py;
     }

@@ -1,6 +1,7 @@
 package com.nudge.ecs.gdx.components;
 
 import com.nudge.ecs.Component;
+import com.nudge.ecs.gdx.Lab;
 
 /**
  * @author Frederik Dahl
@@ -10,5 +11,13 @@ import com.nudge.ecs.Component;
 
 public class Dying implements Component {
 
-    public float timeToDie = 30;
+    public Dying(float time) {
+        this.timeLeft = time;
+    }
+
+    public Dying() {
+        this(Lab.TIME_TO_DIE);
+    }
+
+    public float timeLeft;
 }
