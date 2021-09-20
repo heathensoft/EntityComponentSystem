@@ -7,8 +7,9 @@ This is a module for a game engine I am working on:
 <a href="https://github.com/fre-dahl/Nudge">Nudge</a>
 
 
+![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot2.png?raw=true)
 
-![1](https://github.com/fre-dahl/EntityComponentSystem/blob/master/screenshots/screenshot1.png?raw=true)
+![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot3.png?raw=true)
 
 There are more than a few ways to design an ECS. And being written in Java, you can't really
 manage caching / memory in the same way you could do with languages like C or C++.
