@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.nudge.ecs.ECS;
+import com.nudge.ecs.ECSystem;
 import com.nudge.ecs.gdx.systems.CollisionSystem;
 import com.nudge.ecs.gdx.systems.DyingSystem;
 import com.nudge.ecs.gdx.systems.MovementSystem;
@@ -19,16 +20,15 @@ import com.nudge.ecs.gdx.util.Screenshot;
 
 public class Simulation extends InputAdapter {
 
-    ECS ecs;
-    Lab lab;
-
+    // -------------------------------------------------------
+    ECS ecs;                                               //|
+    Lab lab;                                               //|
     // --------------------- Systems -------------------------
-
-    Renderer renderer;
-    CollisionSystem collisionSystem;
-    MovementSystem movementSystem;
-    DyingSystem dyingSystem;
-
+    ECSystem renderer;                                     //|
+    ECSystem collisionSystem;                              //|
+    ECSystem movementSystem;                               //|
+    ECSystem dyingSystem;                                  //|
+    // -------------------------------------------------------
 
     public void initialize() {
 
