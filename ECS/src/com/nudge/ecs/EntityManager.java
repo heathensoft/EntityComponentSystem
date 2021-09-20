@@ -17,23 +17,20 @@ public class EntityManager {
     private final EntityPool pool;
 
 
-    protected EntityManager(ECS ecs, int initialCapacity, int maxPoolSize) {
+    protected EntityManager(ECS ecs, int initialCapacity) {
         this.ecs = ecs;
         entities = new Container<>(initialCapacity);
         dirty = new Container<>(initialCapacity);
-        pool = new EntityPool(initialCapacity,maxPoolSize);
+        pool = new EntityPool(initialCapacity,Short.MAX_VALUE);
         pool.fill(initialCapacity/2);
     }
 
 
-
     protected void terminate() {
-        entities.iterate(this::remove); // synchronized in loop
+        entities.iterate(this::remove);
         clean();
-        // entities and dirty should be empty atp.
-        // so should all the systems' KVArrays
         if (entities.notEmpty() || dirty.notEmpty())
-            throw new IllegalStateException("Temporary");
+            throw new IllegalStateException("");
         pool.clear(false);
     }
 

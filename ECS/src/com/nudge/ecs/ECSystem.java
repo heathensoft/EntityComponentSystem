@@ -25,15 +25,24 @@ public abstract class ECSystem {
     private boolean processing;
     private long systemBit;
 
+    @SafeVarargs
+    public ECSystem(ECS ecs, int initialCap, Class<? extends Component>... group) {
+        this(ecs, initialCap, ecs.getGroup(group));
+    }
 
-    public ECSystem(ECS ecs, ComponentGroup group, int initialCapacity) {
-        this.entities = new KVArray<>(initialCapacity);
+    @SafeVarargs
+    public ECSystem(ECS ecs, Class<? extends Component>... group) {
+        this(ecs, ecs.getGroup(group));
+    }
+
+    public ECSystem(ECS ecs, int initialCap, ComponentGroup group) {
+        this.entities = new KVArray<>(initialCap);
         this.group = group;
         this.ecs = ecs;
     }
 
     public ECSystem(ECS ecs, ComponentGroup group) {
-        this(ecs,group,16);
+        this(ecs,64, group);
     }
 
 

@@ -8,101 +8,110 @@ import com.nudge.ecs.ECS;
 import com.nudge.ecs.ECSystem;
 import com.nudge.ecs.Entity;
 import com.nudge.ecs.Getter;
-import com.nudge.ecs.util.containers.Iterator;
 import com.nudge.ecs.gdx.components.Body;
 import com.nudge.ecs.gdx.components.Collider;
-import com.nudge.ecs.gdx.components.Movement;
+import com.nudge.ecs.gdx.components.Velocity;
 import com.nudge.ecs.gdx.util.Point;
 import com.nudge.ecs.gdx.util.QuadTree;
+import com.nudge.ecs.util.containers.Iterator;
 
 /**
  * @author Frederik Dahl
- * 19/09/2021
+ * 20/09/2021
  */
 
 
 public class CollisionSystem extends ECSystem {
 
     private QuadTree<Entity> quadTree;
-    private final Vector2 tmp = new Vector2();
     private final Array<Entity> queried;
     private final Getter<Body> bodyComponents;
-    private final Getter<Movement> movementComponents;
-    private final Getter<Collider> colliderComponents;
+    private final Getter<Velocity> velocityComponents;
+    private final Circle collisionRange = new Circle();
+    private final Vector2 tmp = new Vector2();
 
-    private final Iterator<Entity> treeInit = new Iterator<>() {
+    private final Iterator<Entity> quadTreeInsert = new Iterator<>() {
         @Override
         public void next(Entity e) {
-
-            Body b = bodyComponents.get(e);
+            Body b = bodyComponents.getUnsafe(e);
             quadTree.insert(new Point<>(
-                    b.shape.x,
-                    b.shape.y,
-                    b.shape.radius,
+                    b.position.x,
+                    b.position.y,
+                    b.radius,
                     e
             ));
         }
     };
 
-
-    public CollisionSystem(ECS ecs,int cap) {
-        super(ecs, ecs.getGroup(Collider.class, Body.class, Movement.class), cap);
+    public CollisionSystem(ECS ecs, int cap){
+        super(ecs,cap, ecs.getGroup(Body.class, Collider.class, Velocity.class));
+        velocityComponents = ecs.getter(Velocity.class);
         bodyComponents = ecs.getter(Body.class);
-        colliderComponents = ecs.getter(Collider.class);
-        movementComponents = ecs.getter(Movement.class);
         queried = new Array<>(cap);
     }
 
     @Override
     protected void processEntity(Entity e) {
 
-        Collider collider = colliderComponents.get(e);
-        checkBounds(e,collider);
-        if (!collider.hit){ // if colliding with bounds, don't check other collisions. just testing
-            quadTree.query(queried,collider.range);
-            for (Entity o: queried) {
-                if (!o.equals(e))
-                    collisionCheck(e, o, collider);
+        Body b1 = bodyComponents.getUnsafe(e);
+        if (!boundaryCollision(e,b1)) {
+            collisionRange.set(
+                    b1.position.x,
+                    b1.position.y,
+                    b1.radius
+            );
+            quadTree.query(
+                    queried,
+                    collisionRange
+            );
+            for (Entity o: queried){
+
+                if (!e.equals(o)) {
+
+                    Body b2 = bodyComponents.getUnsafe(o);
+                    final float eX = b1.position.x;
+                    final float oX = b2.position.x;
+                    final float eY = b1.position.y;
+                    final float oY = b2.position.y;
+                    final float dx = eX - oX;
+                    final float dy = eY - oY;
+                    final float dist = dx * dx + dy * dy;
+                    final float rSum = b1.radius + b2.radius;
+
+                    if (dist < rSum * rSum) {
+                        Velocity v = velocityComponents.getUnsafe(e);
+                        tmp.set(eX - oX, eY - oY);
+                        tmp.nor().scl(v.speed);
+                        v.velocity.set(tmp);
+
+
+                    }
+                }
             }
             queried.clear();
         }
-
     }
 
-    private void checkBounds(Entity e, Collider c) {
-        Body b = bodyComponents.get(e);
+    private boolean boundaryCollision(Entity e, Body b) {
 
-        boolean invert, invertX, invertY;
-        invert = invertX = invertY = false;
-        if (b.shape.x < b.shape.radius || b.shape.x > Gdx.graphics.getWidth() - b.shape.radius) {
-            invert = invertX = true;
-            c.hit = true;
+        final float x = b.position.x;
+        final float y = b.position.y;
+        final float r = b.radius;
+
+        boolean collision = false;
+
+        if (x < r || x > Gdx.graphics.getWidth() - r) {
+            Velocity v = velocityComponents.getUnsafe(e);
+            v.velocity.scl(-1,1);
+            collision = true;
         }
-        if (b.shape.y < b.shape.radius || b.shape.y > Gdx.graphics.getHeight() - b.shape.radius) {
-            invert = invertY = true;
-            c.hit = true;
-        }
-        if (invert) {
-            Movement m = movementComponents.get(e);
-            if (invertX) m.direction.x = -m.direction.x;
-            if (invertY) m.direction.y = -m.direction.y;
+        if (y < r || y > Gdx.graphics.getHeight() - r) {
+            Velocity v = velocityComponents.getUnsafe(e);
+            v.velocity.scl(1,-1);
+            collision = true;
         }
 
-    }
-
-    private void collisionCheck(Entity e1, Entity e2, Collider collider) {
-        final Circle b1 = bodyComponents.get(e1).shape;
-        final Circle b2 = bodyComponents.get(e2).shape;
-        final float dx = b1.x - b2.x;
-        final float dy = b1.y - b2.y;
-        final float dist = dx * dx + dy * dy;
-        final float rSum = b1.radius + b2.radius;
-        if (dist < rSum * rSum) {
-            collider.hit = true;
-            Vector2 dir = movementComponents.get(e1).direction;
-            tmp.set(b1.x - b2.x, b1.y - b2.y);
-            dir.set(tmp.nor());
-        }
+        return collision;
     }
 
     @Override
@@ -112,9 +121,8 @@ public class CollisionSystem extends ECSystem {
                 0,
                 Gdx.graphics.getWidth(),
                 Gdx.graphics.getHeight());
-        getEntities().iterate(treeInit);
+        getEntities().iterate(quadTreeInsert);
     }
-
 
     @Override
     protected void terminate() {

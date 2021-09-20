@@ -5,7 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.nudge.ecs.ECS;
 import com.nudge.ecs.gdx.systems.CollisionSystem;
-import com.nudge.ecs.gdx.systems.DamageSystem;
+import com.nudge.ecs.gdx.systems.DyingSystem;
 import com.nudge.ecs.gdx.systems.MovementSystem;
 import com.nudge.ecs.gdx.systems.Renderer;
 
@@ -19,31 +19,35 @@ public class Simulation extends InputAdapter {
 
 
     ECS ecs;
-    Forge forge;
+    Lab lab;
+
+    // Systems
     Renderer renderer;
-    MovementSystem movementSystem;
     CollisionSystem collisionSystem;
-    DamageSystem damageSystem;
+    MovementSystem movementSystem;
+    DyingSystem dyingSystem;
+
 
     public void initialize() {
-        final int initialCap = 1000;
-        ecs = new ECS(initialCap,Short.MAX_VALUE);
+        final int initialCap = 40000;
+        ecs = new ECS(initialCap);
+        lab = new Lab(ecs.entityManager());
         movementSystem = new MovementSystem(ecs,initialCap);
         collisionSystem = new CollisionSystem(ecs,initialCap);
-        damageSystem = new DamageSystem(ecs,initialCap);
+        dyingSystem = new DyingSystem(ecs,initialCap);
         renderer = new Renderer(ecs,initialCap);
         ecs.registerSystem(movementSystem);
         ecs.registerSystem(collisionSystem);
-        ecs.registerSystem(damageSystem);
+        ecs.registerSystem(dyingSystem);
         ecs.registerSystem(renderer);
-        forge = new Forge(ecs.entityManager());
         ecs.initialize();
         Gdx.input.setInputProcessor(this);
-
+        lab.createVulnerable(initialCap);
     }
 
     public void update(float dt) {
-        damageSystem.process();
+        Gdx.graphics.setTitle("FPS: "+(int)(1/dt));
+        //dyingSystem.process(dt);
         collisionSystem.process();
         movementSystem.process(dt);
     }
@@ -57,18 +61,14 @@ public class Simulation extends InputAdapter {
     }
 
 
-
-
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         screenY = Gdx.graphics.getHeight() - screenY;
         if(pointer == 0 && button == 0){
-            forge.create(screenX,screenY);
-            System.out.println(screenX + " " + screenY);
+            lab.introduceVirus(screenX,screenY);
         } else if (pointer == 0 && button == 1){
-            System.out.println(screenX + " " + screenY);
-        }
-        return true;
+            //System.out.println(screenX + " " + screenY);
+        }return true;
     }
 
 

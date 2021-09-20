@@ -8,6 +8,7 @@ import com.nudge.ecs.Component;
  */
 
 
-public class Collider implements Component {
+public class Dying implements Component {
 
+    public float timeToDie = 30;
 }

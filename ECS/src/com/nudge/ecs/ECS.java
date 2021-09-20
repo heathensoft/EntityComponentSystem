@@ -18,10 +18,10 @@ public class ECS {
     private Diagnostics diagnostics;
     private boolean initialized;
 
-    public ECS(int initialCapacity, int maxPoolSize) {
+    public ECS(int initialCapacity) {
         runTimeStatistics = new RunTimeStatistics(this);
         componentManager = new ComponentManager(this);
-        entityManager = new EntityManager(this,initialCapacity,maxPoolSize);
+        entityManager = new EntityManager(this,initialCapacity);
         systemManager = new SystemManager(this);
     }
 
