@@ -20,7 +20,7 @@ public class Screenshot {
 
         Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
         BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-        PixmapIO.writePNG(Gdx.files.external("screenshots/screenshot "+ count++ +".png"), pixmap); // users/frede/screenshots
+        PixmapIO.writePNG(Gdx.files.external("screenshots/screenshot"+ count++ +".png"), pixmap); // users/frede/screenshots
         pixmap.dispose();
     }
 }
