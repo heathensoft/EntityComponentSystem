@@ -101,7 +101,7 @@ Core design principles:
 the system then adds them to be processed by the Dying-system)
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot3.png?raw=true)
 
-
+![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/highspeed.gif?raw=true)
 
 ### Recommendations, refs. and inspiration:
 
