@@ -17,7 +17,7 @@ But for now we have a working example in Libgdx.
 
 Screenshot from the <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">LibGDX example</a>.
 
-(Starting with 30 000 entities. Introducing 2 "infected")
+(Starting with 30 000 colliding bodies. Introducing 2 "infected")
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot2.png?raw=true)
 
 
