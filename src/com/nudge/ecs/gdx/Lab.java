@@ -23,7 +23,7 @@ public class Lab {
      private final EntityManager manager;
      private final Random rnd;
 
-     private final float speed = 400.0f;
+     private final float speed = 100.0f;
      private final int maxRadius = 2;
      public final static int TIME_TO_DIE = 2;
 
