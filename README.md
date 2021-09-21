@@ -134,6 +134,13 @@ The systems we need then are (Required components):
 
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/animation.gif?raw=true)
 
+The LibGDX packages needed are included in the lib folder.
+So the example program should be good to go. You just have to clone the repo and add the jars to the project.
+You could also set up a <a href="https://libgdx.com/dev/project-generation/">new LibGDX-project</a> and
+add the ECS module to your project. Then replace the project src folder with the example src.
+I believe either should work. You could use the <a href="https://github.com/fre-dahl/EntityComponentSystem/discussions">discussions</a> to
+give me feedback on anything!
+
 
 
 ### Recommendations, refs. and inspiration:
