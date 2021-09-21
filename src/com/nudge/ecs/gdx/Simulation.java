@@ -32,7 +32,7 @@ public class Simulation extends InputAdapter {
 
     public void initialize() {
 
-        final int initialCap = 10000;
+        final int initialCap = 15000;
 
         // Setting up the ECS and creating the "lab"
         ecs = new ECS(initialCap);
