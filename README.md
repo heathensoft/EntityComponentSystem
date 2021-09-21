@@ -9,34 +9,35 @@
 
 The ECS module is a game object management system,
 favoring composition over inheritance.
-Separating entities, components and systems.
+Separating logic and data.
 
-The module is open-source and will be a core module in the 
-<a href="https://github.com/fre-dahl/Nudge">Nudge</a> framework.
-But for now we have a working example in Libgdx.
+The stand-alone ECS module is open-source and can be used with any framework.
+To show you how it could be used, the repo. includes a working test-example for the <a href="https://libgdx.com/">LibGDX</a> framework
+in the src folder.
 
-There will be a java-doc up when it's complete. Some core parts has documentation in the code.
+There will be a java-doc up when it's complete. Some core parts has doc-comments in the code.
 
-Screenshot from the <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">LibGDX example</a>. 
+Screenshot from the LibGDX <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">example</a>. 
 
 
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot2.png?raw=true)
 
 
+There are more than a few ways to design an <a href="https://en.wikipedia.org/wiki/Entity_component_system">ECS</a>.
+With programming languages like C or C++ you could keep the component data stacked next to each other in memory to reduce 
+the number of cache-misses when looping through them in the systems. But this being written in Java, you can't really
+manage caching / memory-layout in the same way.
 
-There are more than a few ways to design an ECS. This being written in Java, you can't really
-manage caching / memory in the same way you could do with languages like C or C++.
-
-Even without this control, it still makes creating elements for interactive applications more manageable.
-In short, instead of inheritance you have "entities" with a set of components.
-Making it easier to create and change objects, by just adding or removing components.
+The main point of an ECS though, is how you organize your game-objects.
+instead of inheritance you have "entities" with a set of components. 
+Making it easier to create and change objects. Adding or removing components change their behavior at run-time.
 
 Let's say you start an inheritance tree structure with "Animal" being the absolute super.
 Somewhere down the tree you make a separation between something like flying and non-flying,
 or maybe you call them Avians and Mammals. You are kinda stuck with your choice of abstraction.
 They are now separated. You might have spent the afternoon trying figure out
-how the inheritance structure should be set up. If you eventually want a specific land-animal
-having some bird like quality from a subset of the Avians.
+how the inheritance structure should be set up for your application. If you eventually want a specific land-animal
+to have some bird like quality from a subset of the Avians.
 You would need to rethink your abstraction. Maybe just reuse the code from the avian-subset.
 Maybe the choice of abstraction wasn't good enough in the first place,
 or maybe you could just have it implement an interface to represent the wanted ability.
@@ -53,8 +54,8 @@ together in arrays. The entity then, would be the key to look them up.
 
 In Java, having the entities be containers for its components might be a better idea. Since,
 again you have no real control over where the components are stored in memory.
-But I still wanted to try the "Structure of Arrays" approach for science.
-Either way, both implementations are valid.
+But I still wanted to try the "Structure of Arrays" approach.
+Either way, both implementations work.
 
 
 #### What are components?
@@ -65,15 +66,15 @@ the base class Component is just an empty Interface.
 public class Transform implements Component
 
     Vector2 scale;
-    Vector3 position;
+    Vector2 position;
     float rotation;
 
 
 #### What are systems?
 
-Systems are the processors of components. This is where the logic is implemented.
-One system might operate on position and velocity (write).
-Another might operate on position and texture (read).
+Systems are the "processors" of components. This is where the logic is implemented.
+If an entity is registered to have the required components of a system, it will be processed by that system.
+One system could operate on position and velocity. Another might operate on position and texture.
 
     
     entities.iterate(process(e))
