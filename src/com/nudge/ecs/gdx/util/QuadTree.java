@@ -9,9 +9,6 @@ import com.badlogic.gdx.utils.Array;
  * With this, "particles" only need to check their immediate surroundings for collision.
  * Making checks a lot faster.
  *
- * This is not optimized, and you have to rebuild the entire tree on each frame.
- * But it does its job.
- *
  * @author Frederik Dahl
  * 2019
  */

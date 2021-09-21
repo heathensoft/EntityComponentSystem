@@ -127,7 +127,7 @@ The systems we need then are (Required components):
 * A renderer to render the body shape and color (body)
 * A collision-System to manage the collisions (collider, body, velocity)
 * A movement-system so it can move (velocity, body)
-* A dying system with reduce the time to die, and delete the entity (dying)
+* A dying system to reduce the time to die, and delete the entity (dying)
 
 
 (Here with 30k vulnerable bodies, 2 seconds to die on infection)
