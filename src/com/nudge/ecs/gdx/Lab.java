@@ -23,9 +23,9 @@ public class Lab {
      private final EntityManager manager;
      private final Random rnd;
 
-     private final float speed = 100.0f;
-     private final int maxRadius = 2;
-     public final static int TIME_TO_DIE = 10;
+     private final float speed = 50.0f;
+     private final int maxRadius = 4;
+     public final static int TIME_TO_DIE = 3;
 
      public Lab(EntityManager entityManager){
           this.manager = entityManager;
