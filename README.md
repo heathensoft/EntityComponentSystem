@@ -15,10 +15,13 @@ The module is open-source and will be a core module in the
 <a href="https://github.com/fre-dahl/Nudge">Nudge</a> framework.
 But for now we have a working example in Libgdx.
 
-Screenshot from the <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">LibGDX example</a>.
+There will be a java-doc up when it's complete. Some core parts has documentation in the code.
 
-(Starting with 30 000 colliding bodies. Introducing 2 "infected")
+Screenshot from the <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">LibGDX example</a>. 
+
+
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot2.png?raw=true)
+
 
 
 There are more than a few ways to design an ECS. This being written in Java, you can't really
@@ -97,14 +100,40 @@ Core design principles:
 
 ### LibGDX usage example
 
-(As it spreads, infected entities give a "Dying" component to vulnerable entities.
-the system then adds them to be processed by the Dying-system)
+We are simulating the spreading of a virus:
 
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/screenshot3.png?raw=true)
 
-(Here with 30k bodies, 2 seconds to die)
+So we need some entity components:
+
+* A body with a shape, color and position. 
+* A velocity with a direction and speed.
+* A collider to indicate that it can collide.
+* A "dying" component to give it that ability and a time and a die.
+
+For the body we have some additional data for convenience.
+It could instead be delegated to another component:
+The body component also stores a boolean for whether it's vulnerable.
+And a boolean for whether it is infected.
+
+The core of it is this:
+
+If an infected body collides with a vulnerable non-infected,
+The vulnerable is now infected and is assigned a Dying-component.
+(You could also be infected and not be vulnerable)
+
+The systems we need then are (Required components):
+* A renderer to render the body shape and color (body)
+* A collision-System to manage the collisions (collider, body, velocity)
+* A movement-system so it can move (velocity, body)
+* A dying system with reduce the time to die, and delete the entity (dying)
+
+
+(Here with 30k vulnerable bodies, 2 seconds to die on infection)
 
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/animation.gif?raw=true)
+
+
 
 ### Recommendations, refs. and inspiration:
 

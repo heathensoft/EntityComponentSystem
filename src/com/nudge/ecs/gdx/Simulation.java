@@ -32,7 +32,7 @@ public class Simulation extends InputAdapter {
 
     public void initialize() {
 
-        final int initialCap = 30000;
+        final int initialCap = 10000;
 
         // Setting up the ECS and creating the "lab"
         ecs = new ECS(initialCap);
@@ -49,11 +49,9 @@ public class Simulation extends InputAdapter {
         ecs.registerSystem(collisionSystem);
         ecs.registerSystem(renderer);
 
-        // Initialize the ECS
-        ecs.initialize();
+        ecs.initialize(); // Initialize the ECS
 
-        // libgdx input
-        Gdx.input.setInputProcessor(this);
+        Gdx.input.setInputProcessor(this); // libgdx input
 
         // creating our entities in the lab
         lab.createVulnerable(initialCap-5);
