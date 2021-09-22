@@ -15,7 +15,7 @@ The stand-alone ECS module is open-source and can be used with any framework.
 To show you how it could be used, the repo. includes a working test-example for the <a href="https://libgdx.com/">LibGDX</a> framework
 in the src folder.
 
-There will be a java-doc up when it's complete. Some core parts has doc-comments in the code.
+There will be a java-doc up when it's complete. Some core parts has doc-comments.
 
 Screenshot from the LibGDX <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">example</a>. 
 
