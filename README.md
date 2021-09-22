@@ -15,7 +15,7 @@ The stand-alone ECS module is open-source and can be used with any framework.
 To show you how it could be used, the repo. includes a working test-example for the <a href="https://libgdx.com/">LibGDX</a> framework
 in the src folder.
 
-There will be a java-doc up when it's complete. Some core parts has doc-comments in the code.
+There will be a java-doc up when it's complete. Some core parts has doc-comments.
 
 Screenshot from the LibGDX <a href="https://github.com/fre-dahl/EntityComponentSystem/tree/main/src/com/nudge/ecs/gdx">example</a>. 
 
@@ -32,20 +32,7 @@ The main point of an ECS though, is how you organize your game-objects.
 instead of inheritance you have "entities" with a set of components. 
 Making it easier to create and change objects. Adding or removing components change their behavior at run-time.
 
-Let's say you start an inheritance tree structure with "Animal" being the absolute super.
-Somewhere down the tree you make a separation between something like flying and non-flying,
-or maybe you call them Avians and Mammals. You are kinda stuck with your choice of abstraction.
-They are now separated. You might have spent the afternoon trying figure out
-how the inheritance structure should be set up for your application. If you eventually want a specific land-animal
-to have some bird like quality from a subset of the Avians.
-You would need to rethink your abstraction. Maybe just reuse the code from the avian-subset.
-Maybe the choice of abstraction wasn't good enough in the first place,
-or maybe you could just have it implement an interface to represent the wanted ability.
-Maybe the subset of birds is better off just implementing that interface as well.
-That's logical. What about invertebrates? Flying fish? 
 
-It would be nice not to think about that. Anything can fly if you just gave it the ability.
-You could, at run-time alter the same entity from a menu-button to a trebuchet.
 
 ### The implementation
 In some ECS implementations the entity would be the container for its components. But for
@@ -87,8 +74,8 @@ One system could operate on position and velocity. Another might operate on posi
     }
 
 When enabling/disabling/deleting an entity or adding/removing components from it.
-The entity gets revalidated by each system. Gets kept/removed or added dependant
-of the specific system requirements.
+The entity gets revalidated by each system. Ignored, kept, removed or added depending
+on the specific system requirements.
 
 Modularity, not inheritance.
 
@@ -170,7 +157,7 @@ pool type will be returned to the registered pool. So you could have a "factory"
 contain pools. Pools can be pre-filled with components on initialization.
 Pools could be beneficial for "heavier" components.
 
-I would really appreciate any feedback. And if you would like to contribute let me know :)
+I would really appreciate any feedback. And if you like to contribute let me know :)
 
 ### Recommendations, refs. and inspiration:
 
