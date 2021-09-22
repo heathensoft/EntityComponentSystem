@@ -130,7 +130,8 @@ The systems we need then are (Required components):
 * A dying system to reduce the time to die, and delete the entity (dying)
 
 
-(Here with 30k vulnerable bodies, 2 seconds to die on infection)
+Here with 30k vulnerable bodies, 2 seconds to die on infection
+I'm actually quite happy with this.
 
 ![1](https://github.com/fre-dahl/EntityComponentSystem/blob/main/screenshots/animation.gif?raw=true)
 
@@ -141,7 +142,35 @@ add the ECS module to your project. Then replace the project src folder with the
 I believe either should work. You could use the <a href="https://github.com/fre-dahl/EntityComponentSystem/discussions">discussions</a> to
 give me feedback on anything!
 
+### Notes
 
+I have worked on a few games and have tried various ways of
+organizing my game logic. I can say that I already really like this pattern.
+Dividing functionality into systems like this makes the code easier to follow for sure.
+You know where the data should be and where the actual logic should be.
+Having entities be defined entirely by its components makes things very flexible.
+
+As for the size / how much data should be in one component is use-case specific.
+For our LixGDX example. The Body component could easily have had the movement
+component data, but then all bodies would move. Generally, smaller, more specific components
+makes entities more flexible. 
+
+Having entities store its position, could be beneficial. Practically all game objects
+has a position. Something to consider. Another thing that I mentioned above, is having the entities
+be the container of the components themselves. 
+
+This system is limited a maximum of 64 unique component-types. The size of the largest
+primitive. If you had the components stored inside the entity, you could more easily set it up
+without a hard cap like this I would think.
+
+There is some functionality I left out of the example. Component pools being the main thing.
+Like you would register an ECSystem, you can also register pools. Any removed component of the
+pool type will be returned to the registered pool. So you could have a "factory" set up
+(like the lab in the LibGDX example) where you create the objects, and have the factory extend or
+contain pools. Pools can be pre-filled with components on initialization.
+Pools could be beneficial for "heavier" components.
+
+I would really appreciate any feedback. And if you would like to contribute let me know :)
 
 ### Recommendations, refs. and inspiration:
 
