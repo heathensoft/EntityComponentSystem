@@ -151,8 +151,8 @@ primitive. If you had the components stored inside the entity, you could more ea
 without a hard cap like this I would think.
 
 There is some functionality I left out of the example. Component pools being the main thing.
-Like you would register an ECSystem, you can also register pools. Any removed component of the
-pool type will be returned to the registered pool. So you could have a "factory" set up
+You can register pools, letting any removed component of the
+pool type to be returned to the registered pool. So you could have a "factory" set up
 (like the lab in the LibGDX example) where you create the objects, and have the factory extend or
 contain pools. Pools can be pre-filled with components on initialization.
 Pools could be beneficial for "heavier" components.

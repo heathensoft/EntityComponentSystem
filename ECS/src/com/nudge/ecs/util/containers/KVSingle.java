@@ -24,12 +24,12 @@ public abstract class KVSingle implements KeyValue {
     }
 
     @Override
-    public void onReplacement(int newKey, short srcArray) throws KeyStateConflictException {
+    public void onReplacement(int newKey, short srcArray) {
         kvKey = newKey;
     }
 
     @Override
-    public void onRemoval(short targetArray) throws KeyStateConflictException {
+    public void onRemoval(short targetArray) {
         kvKey = KeyValue.NONE;
     }
 }
