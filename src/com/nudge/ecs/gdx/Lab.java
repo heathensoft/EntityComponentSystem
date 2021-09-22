@@ -34,60 +34,30 @@ public class Lab {
 
      public void introduceVirus(int x, int y) {
           Entity e = manager.create();
-          Body body = new Body(
-                  new Vector2(x,y),
-                  rngRadius(),
-                  true,
-                  true);
-          Velocity velocity = new Velocity(
-                  rnd.nextFloat(),
-                  speed);
-          manager.addComponents(e,
-                  body,
-                  new Collider(),
-                  velocity,
-                  new Dying());
+          Body body = new Body(new Vector2(x,y), rngRadius(),true,true);
+          Velocity velocity = new Velocity(rnd.nextFloat(), speed);
+          manager.addComponents(e, body, new Collider(), velocity, new Dying());
      }
 
      public void createVulnerable(int amount) {
           amount = Math.max(1,amount);
           for (int i = 0; i < amount; i++) {
                Entity e = manager.create();
-               Body body = new Body(
-                       rngPos(),
-                       rngRadius(),
-                       true,
-                       false);
-               Velocity velocity = new Velocity(
-                       rnd.nextFloat(),
-                       speed);
-               manager.addComponents(e,
-                       body,
-                       new Collider(),
-                       velocity);
+               Body body = new Body(rngPos(), rngRadius(),true,false);
+               Velocity velocity = new Velocity(rnd.nextFloat(), speed);
+               manager.addComponents(e, body, new Collider(), velocity);
           }
-
      }
 
      public void createImmune(int amount) {
           amount = Math.max(1,amount);
           for (int i = 0; i < amount; i++) {
                Entity e = manager.create();
-               Body body = new Body(
-                       rngPos(),
-                       rngRadius(),
-                       false,
-                       false);
-               Velocity velocity = new Velocity(
-                       rnd.nextFloat(),
-                       speed);
-               manager.addComponents(e,
-                       body,
-                       new Collider(),
-                       velocity);
+               Body body = new Body(rngPos(), rngRadius(),false,false);
+               Velocity velocity = new Velocity(rnd.nextFloat(), speed);
+               manager.addComponents(e, body, new Collider(), velocity);
           }
      }
-
 
      private Vector2 rngDir() {
           Vector2 v = new Vector2(1,0);

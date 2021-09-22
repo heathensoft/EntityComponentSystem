@@ -1,5 +1,5 @@
 
-## Entity Component System (NudgeECS)
+## nudge.ECS
 
 
 ### Status
