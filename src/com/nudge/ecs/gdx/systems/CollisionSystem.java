@@ -55,7 +55,7 @@ public class CollisionSystem extends ECSystem {
     protected void processEntity(Entity e) {
 
         Body b1 = bodyComponents.getUnsafe(e);
-        if (!boundaryCollision(e,b1)) {
+        if (!offScreen(e,b1)) {
             collisionRange.set(
                     b1.position.x,
                     b1.position.y,
@@ -99,15 +99,34 @@ public class CollisionSystem extends ECSystem {
         }
     }
 
-    private boolean boundaryCollision(Entity e, Body b) {
+    private boolean offScreen(Entity e, Body b) {
 
         final float x = b.position.x;
         final float y = b.position.y;
         final float r = b.radius;
 
-        boolean collision = false;
+        boolean offScreen = false;
 
+        if (x < 0) {
+            b.position.x = x + Gdx.graphics.getWidth();
+            offScreen = true;
+        }
+        else if (x > Gdx.graphics.getWidth()) {
+            b.position.x = x - Gdx.graphics.getWidth();
+            offScreen = true;
+        }
+        else if (y < 0) {
+            b.position.y = y + Gdx.graphics.getHeight();
+            offScreen = true;
+        }
+        else if (y > Gdx.graphics.getHeight()) {
+            b.position.y = y - Gdx.graphics.getHeight();
+            offScreen = true;
+        }
+
+        /*
         if (x < r || x > Gdx.graphics.getWidth() - r) {
+            if (x<-10) System.out.println("fffff");
             Velocity v = velocityComponents.getUnsafe(e);
             v.velocity.scl(-1,1);
             collision = true;
@@ -117,8 +136,9 @@ public class CollisionSystem extends ECSystem {
             v.velocity.scl(1,-1);
             collision = true;
         }
+         */
 
-        return collision;
+        return offScreen;
     }
 
     @Override
