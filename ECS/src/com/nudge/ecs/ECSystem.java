@@ -6,7 +6,14 @@ import com.nudge.ecs.util.containers.KVArray;
 
 /**
  *
+ * Systems must be created before initializing the ECS.
  *
+ * The initialization order:
+ *
+ * 1. Create the ECS
+ * 2. Create the Systems and register pools
+ * 3. Initialize the ECS
+ * 4. Good to go
  *
  * @author Frederik Dahl
  * 18/09/2021
@@ -36,15 +43,17 @@ public abstract class ECSystem {
     }
 
     public ECSystem(ECS ecs, int initialCap, ComponentGroup group) {
+        if (ecs == null) throw new IllegalArgumentException("ECS cannot be null");
         this.entities = new KVArray<>(initialCap);
         this.group = group;
         this.ecs = ecs;
+        if (ecs.isInitialized()) throw new IllegalStateException("Create system before ECS initialize");
+        ecs.systemManager.register(this);
     }
 
     public ECSystem(ECS ecs, ComponentGroup group) {
         this(ecs,64, group);
     }
-
 
     /**
      * Called when registered in the ECS
@@ -94,7 +103,7 @@ public abstract class ECSystem {
 
     /**
      * Any state-changes to an entity (add/rem-components, enable/disable)
-     * will in most cases trigger its revalidation by each registered system.
+     * will trigger its revalidation by each registered system.
      * Systems will appropriately keep, add or remove the entity.
      *
      * If for some reason a call to entityManager.clean() should occur while the system

@@ -45,11 +45,6 @@ public class ComponentManager {
         control = new CapacityControl(this);
         components = new Container<>(9); // 9 hits 64 (Max) on resizing
     }
-
-
-    protected void update(float dt) {
-        control.check(dt);
-    }
     
     // this is happening after entityManager termination.
     protected void clearContainers() {

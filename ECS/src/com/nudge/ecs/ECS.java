@@ -2,6 +2,23 @@ package com.nudge.ecs;
 
 /**
  *
+ * The top class of the Entity component system.
+ *
+ * Use the EntityManager to create entities and give them components.
+ * Use the RunTimeStatistics to query things like active entities count etc.
+ * You can run diagnostics to (though it's mostly for debugging while im developing)
+ * If you want the system to manage capacity for component-pools and containers
+ * that has been inactive for more than 5 min, i.e. shrink them if possible,
+ * you need to run capacity control anywhere in your game-loop.
+ *
+ * But before you can use the ECS you need to initialize it:
+ *
+ * The initialization order:
+ *
+ * 1. Create a new ECS
+ * 2. Create the Systems and register pools
+ * 3. Initialize the ECS
+ * 4. Good to go
  *
  * @author Frederik Dahl
  * 01/09/2021
@@ -32,15 +49,10 @@ public class ECS {
         }
     }
 
-    public void update(float dt) {
-        componentManager.update(dt);
+    public void capacityControl(float dt) {
+        componentManager.control.check(dt);
     }
 
-
-    public void registerSystem(ECSystem system) {
-        if (initialized) throw new IllegalStateException("Register systems before ECS initialization");
-        systemManager.register(system);
-    }
 
     public <T extends Component> void registerComponentPool(ComponentPool<T> pool, Class<T> clazz) {
         if (!initialized) throw new IllegalStateException("Register pools before ECS initialization");

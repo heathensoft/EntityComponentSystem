@@ -5,16 +5,13 @@ import com.nudge.ecs.util.containers.exceptions.KeyStateConflictException;
 
 /**
  * KeyValue implementation for objects potentially inhabiting more than one KVArray.
- * To limit overhead in each item, the maximum arrays an item can inhabit is Byte.MAX_VALUE,
+ * To limit overhead in each item, the maximum KVArrays an item can inhabit is Byte.MAX_VALUE,
  * And the maximum number of KVArray instances at any given time is Short.MAX_VALUE.
  * I would believe both should be sufficiently high limits.
  *
  * The key and id arrays grow by their length x2 when full (starting at 2).
- * They do not shrink in this implementation. In the ECS, Entities (extends KVShared)
- * are pooled and reused, so on average I would suspect the sizes growing to some natural equilibrium.
- * For the ECS application, this natural point would be highly determined by the number of EntitySystems.
+ * They do not shrink.
  *
- * I could eventually create more specialized implementations to minimize overhead.
  *
  * @author Frederik Dahl
  * 23/08/2021
@@ -22,7 +19,7 @@ import com.nudge.ecs.util.containers.exceptions.KeyStateConflictException;
 
 
 public abstract class KVShared implements KeyValue {
-    
+
     private byte kvCount;
     private int[] kvKeys = {NONE,NONE};
     private short[] kvArrID = {NONE,NONE};
@@ -40,7 +37,7 @@ public abstract class KVShared implements KeyValue {
         if (kvArrID.length == kvCount) {
             if (kvCount == Byte.MAX_VALUE)
                 throw new IllegalStateException("Item can max inhabit 127 Arrays");
-            int newSize = Math.min(Byte.MAX_VALUE, kvCount * 2);
+            final int newSize = Math.min(Byte.MAX_VALUE, kvCount * 2);
             int[] newKeys = new int[newSize];
             short[] newArID = new short[newSize];
             for (byte i = 0; i < kvCount; i++) {
@@ -65,13 +62,22 @@ public abstract class KVShared implements KeyValue {
             }
         }throw new KeyStateConflictException("Item is not registered to inhabit the caller");
     }
-    
+
     @Override
     public void onRemoval(short targetArray) {
         for (int i = 0; i < kvCount; i++) {
             if (kvArrID[i] == targetArray) {
-                kvKeys[i] = kvArrID[i] = NONE;
-                //kvCount--;
+                final int lastIndex = kvCount - 1;
+                if (i != lastIndex) {
+                    // here we have to put the last
+                    // indexes into the removed slots.
+                    kvKeys[i] = kvKeys[lastIndex];
+                    kvArrID[i] = kvArrID[lastIndex];
+                    kvKeys[lastIndex] = NONE;
+                    kvArrID[lastIndex] = NONE;
+                }
+                else kvKeys[i] = kvArrID[i] = NONE;
+                kvCount--;
                 return;
             }
         }throw new KeyStateConflictException("Item is not registered to inhabit the caller");

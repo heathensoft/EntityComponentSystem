@@ -38,16 +38,11 @@ public class Simulation extends InputAdapter {
         ecs = new ECS(initialCap);
         lab = new Lab(ecs.entityManager());
 
-        // Creating and registering our systems
+        // Creating our systems
         movementSystem = new MovementSystem(ecs,initialCap);
         collisionSystem = new CollisionSystem(ecs,initialCap);
         dyingSystem = new DyingSystem(ecs,initialCap);
         renderer = new Renderer(ecs,initialCap);
-
-        ecs.registerSystem(dyingSystem);
-        ecs.registerSystem(movementSystem);
-        ecs.registerSystem(collisionSystem);
-        ecs.registerSystem(renderer);
 
         ecs.initialize(); // Initialize the ECS
 

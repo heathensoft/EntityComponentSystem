@@ -45,7 +45,6 @@ public class SystemManager {
     }
 
     protected void register(ECSystem system) {
-        if (system == null) throw new IllegalStateException("attempted to register null System");
         Class<? extends ECSystem> c = system.getClass();
         if (systemsMap.get(c) == null) {
             system.set(getBit(c));
