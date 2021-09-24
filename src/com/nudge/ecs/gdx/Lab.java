@@ -23,9 +23,9 @@ public class Lab {
      private final EntityManager manager;
      private final Random rnd;
 
-     private final float speed = 150.0f;
+     private final float speed = 10.0f;
      private final int maxRadius = 4;
-     public final static int TIME_TO_DIE = 2;
+     public final static int TIME_TO_DIE = 60;
 
      public Lab(EntityManager entityManager){
           this.manager = entityManager;
@@ -34,6 +34,7 @@ public class Lab {
 
      public void introduceVirus(int x, int y) {
           Entity e = manager.create();
+          //System.out.println(e.id());
           Body body = new Body(new Vector2(x,y), rngRadius(),true,true);
           Velocity velocity = new Velocity(rnd.nextFloat(), speed);
           manager.addComponents(e, body, new Collider(), velocity, new Dying());

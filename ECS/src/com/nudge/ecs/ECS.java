@@ -35,10 +35,10 @@ public class ECS {
     private Diagnostics diagnostics;
     private boolean initialized;
 
-    public ECS(int initialCapacity) {
+    public ECS(int initialCap) {
         runTimeStatistics = new RunTimeStatistics(this);
         componentManager = new ComponentManager(this);
-        entityManager = new EntityManager(this,initialCapacity);
+        entityManager = new EntityManager(this,initialCap);
         systemManager = new SystemManager(this);
     }
 

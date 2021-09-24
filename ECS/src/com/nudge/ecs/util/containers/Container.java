@@ -5,13 +5,12 @@ package com.nudge.ecs.util.containers;
  * Generic auto-growing container.
  * Backed up by: Object[]
  * Can be used as a stack or an indexed container.
- * Not thread-safe
  *
  * Use-cases (in short):
  *
  * Either one:
  *
- * 1. As a tightly stacked "pool" where you don't care about the specific object added or returned.
+ * 1. As a stack where you don't care about the specific object added or returned.
  * 2. As an array where "holes" are allowed, indexes matter and objects are externally tracked.
  *
  * About:
@@ -19,7 +18,7 @@ package com.nudge.ecs.util.containers;
  * If you attempt to add items out of bound, it will grow to the new capacity of: ( (index of item added + 1) * 3 ) / 2 + 1;
  * You can fill holes with stack() and you can shrink the array to fit its items with fit()
  * fit() will shrink it down to the outermost object (the "peakIndex" or its tail), it will not stack the array.
- *
+ * Read fit. It has some other caveats.
  *
  *
  * @author Frederik Dahl
@@ -126,7 +125,12 @@ public class Container<E> {
         if (item != null) {
             items[index] = null;
             itemCount--;
-        }return (E)item;
+            if (index == peakIndex) {
+                while (items[peakIndex] == null)
+                    if (--peakIndex == -1) break;
+            }
+        }
+        return (E)item;
     }
 
     public E get(int index) {

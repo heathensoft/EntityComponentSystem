@@ -1,4 +1,4 @@
-package com.nudge.ecs.util.containers.exceptions;
+package com.nudge.ecs.util.exceptions;
 
 public class DuplicateElementException extends RuntimeException{
 

@@ -151,8 +151,6 @@ public abstract class ECSystem {
         }
     }
 
-
-
     protected void processEntity(Entity e) {}
 
     protected void processEntity(Entity e, float dt) {}
@@ -163,7 +161,9 @@ public abstract class ECSystem {
 
     protected void initialize() {}
 
-    protected void terminate() {}
+    protected void terminate() {
+        // todo: free the KVArrays
+    }
 
     protected void begin() {}
 
@@ -235,4 +235,5 @@ public abstract class ECSystem {
     public ComponentGroup getGroup() {
         return group;
     }
+
 }

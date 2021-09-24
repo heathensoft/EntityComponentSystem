@@ -1,7 +1,7 @@
 package com.nudge.ecs.util.containers;
 
 
-import com.nudge.ecs.util.containers.exceptions.KeyStateConflictException;
+import com.nudge.ecs.util.exceptions.KeyStateConflictException;
 
 /**
  * KeyValue implementation for objects potentially inhabiting more than one KVArray.

@@ -1,6 +1,11 @@
 package com.nudge.ecs.util;
 
 /**
+ * specific use-case stack.
+ * no checks for out of bounds. initial cap is 16.
+ * will shrink back to 16 if it previously has reached
+ * a cap of 128 and is currently empty.
+ *
  * @author Frederik Dahl
  * 29/08/2021
  */
@@ -10,6 +15,7 @@ public class IntStack {
 
     private int[] s = new int[0x10];
     private int t = -1;
+
 
     public void push(int i) {
         s[++t] = i;
@@ -22,7 +28,7 @@ public class IntStack {
     public int pop() {
         int r = s[t--];
         if (t<0)
-            if (s.length == 0x80)
+            if (s.length >= 0x80)
                 s = new int[0x10];
         return r;
     }

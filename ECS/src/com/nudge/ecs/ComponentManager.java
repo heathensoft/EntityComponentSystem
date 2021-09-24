@@ -43,7 +43,7 @@ public class ComponentManager {
         pools = new ComponentPools(this);
         typeManager = new TypeManager(this);
         control = new CapacityControl(this);
-        components = new Container<>(9); // 9 hits 64 (Max) on resizing
+        components = new Container<>(9); // 9 hits 64 (Max) on resizing // todo: make sure to keep this in mind
     }
     
     // this is happening after entityManager termination.
@@ -281,8 +281,16 @@ public class ComponentManager {
 
     // callback from ContainerControl
     protected void attemptRefitContainer(byte typeID) {
+        System.out.println(typeID);
+        System.out.println(components.get(typeID).capacity());
+
         if (components.get(typeID).fit(false))
+        {
+
             containerRefits++;
+            System.out.println(components.get(typeID).capacity());
+
+        }
     }
 
     // callback from ContainerControl
