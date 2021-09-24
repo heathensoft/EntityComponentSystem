@@ -1,6 +1,7 @@
 package com.nudge.ecs;
 
 
+import com.nudge.ecs.util.IntQueue;
 import com.nudge.ecs.util.IntStack;
 import com.nudge.ecs.util.containers.Pool;
 
@@ -15,11 +16,11 @@ import com.nudge.ecs.util.containers.Pool;
 
 public class EntityPool extends Pool<Entity> {
 
-    private final IntStack freeIDs = new IntStack();
+    private final IntQueue freeIDs = new IntQueue();
     private int genID = 0;
 
-    protected EntityPool(int initialCapacity, int max) {
-        super(initialCapacity, max);
+    protected EntityPool(int initialCapacity) {
+        super(initialCapacity, Short.MAX_VALUE);
     }
 
     @Override
@@ -29,12 +30,12 @@ public class EntityPool extends Pool<Entity> {
 
     @Override
     protected void discard(Entity e) {
-        freeIDs.push(e.id());
+        freeIDs.enqueue(e.id());
     }
 
     @Override
     protected Entity newObject() {
-        int id = freeIDs.isEmpty() ? genID++ : freeIDs.pop();
+        int id = freeIDs.isEmpty() ? genID++ : freeIDs.dequeue();
         return new Entity(id);
     }
 }

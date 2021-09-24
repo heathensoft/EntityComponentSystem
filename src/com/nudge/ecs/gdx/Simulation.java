@@ -11,6 +11,8 @@ import com.nudge.ecs.gdx.systems.DyingSystem;
 import com.nudge.ecs.gdx.systems.MovementSystem;
 import com.nudge.ecs.gdx.systems.Renderer;
 import com.nudge.ecs.gdx.util.Screenshot;
+import com.nudge.ecs.util.IntQueue;
+import com.nudge.ecs.util.containers.Queue;
 
 /**
  * @author Frederik Dahl
@@ -32,7 +34,7 @@ public class Simulation extends InputAdapter {
 
     public void initialize() {
 
-        final int initialCap = 15000;
+        final int initialCap = 1000;
 
         // Setting up the ECS and creating the "lab"
         ecs = new ECS(initialCap);
@@ -44,12 +46,12 @@ public class Simulation extends InputAdapter {
         dyingSystem = new DyingSystem(ecs,initialCap);
         renderer = new Renderer(ecs,initialCap);
 
-        ecs.initialize(); // Initialize the ECS
-
-        Gdx.input.setInputProcessor(this); // libgdx input
-
+        // Initialize the ECS
+        ecs.initialize();
         // creating our entities in the lab
-        lab.createVulnerable(initialCap-5);
+        lab.createVulnerable(15000);
+        // libgdx input
+        Gdx.input.setInputProcessor(this);
     }
 
     // Processing our systems
@@ -58,6 +60,7 @@ public class Simulation extends InputAdapter {
         dyingSystem.process(dt);
         collisionSystem.process();
         movementSystem.process(dt);
+        ecs.capacityControl(dt); //
     }
 
     // Processing the rendering system after update

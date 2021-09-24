@@ -1,4 +1,4 @@
-package com.nudge.ecs.util.containers.exceptions;
+package com.nudge.ecs.util.exceptions;
 
 public class EmptyCollectionException extends RuntimeException {
 

@@ -1,32 +1,31 @@
 package com.nudge.ecs.util.containers;
 
-
 import com.nudge.ecs.util.ShortStack;
-import com.nudge.ecs.util.containers.exceptions.EmptyCollectionException;
-import com.nudge.ecs.util.containers.exceptions.ItemNotFoundException;
-import com.nudge.ecs.util.containers.exceptions.KeyStateConflictException;
+import com.nudge.ecs.util.containers.ECSArray;
+import com.nudge.ecs.util.containers.Iterator;
+import com.nudge.ecs.util.containers.KeyValue;
+import com.nudge.ecs.util.exceptions.EmptyCollectionException;
+import com.nudge.ecs.util.exceptions.ItemNotFoundException;
+import com.nudge.ecs.util.exceptions.KeyStateConflictException;
 
 /**
  *
- * Tightly stacked auto-resizable Key/Value array.
+ * An always tightly stacked, auto-resizable Key/Value array.
+ * Used for both fast removal and iteration of elements.
+ * Replacing the hashmap at the cost of some overhead.
  *
+ * Very fast iteration with the Iterator.
  *
- * Upside:
- * O(1) lookup / removal.               [1]
- * Iterates 2-3x faster than ArrayList. [2]
+ * O[1] removal. For KVShared that is O[A] where A is number of KeyValueArrays
+ * that shares the KeyValue item (or rather the approx. average for all items in the array)
+ * i.e. if our KeyValue items inhabits 2 KeyValueArrays on average, then A would be 2.
  *
- * [1] Technically O(A), where A = approx. the number of KVArrays an item inhabits on average.
- *     That would in practice mean that at some point as A increase, it would degrade to be slower than a HashMap.
- *
- * [2] for(int i = 0; i < count; i++) iterator.next(items[i]); That's it.
- *     I tested enough to personally favor it over any Collection when the downsides are acceptable:
- *
- * Downside:
- * Not java Collections.
- * Items must implement KeyValue.
- * Must use an nudge.ecs.util.containers.Iterator to iterate.
- * Overhead in items inhabiting multiple KVArrays.
- *
+ * !! target capacity is important for all ECSArrays. They are auto-resizable
+ * and the targetCap value is the "restingCap" for the arrays.
+ * In most cases, when you remove the final item and the array length is greater
+ * than the targetCap it will shrink back to that "restingCap".
+ * The fit() method too, will consider the targetCap. Unless you fit absolute.
+ * You can set the targetCap after creating a ECSArray.
  *
  * Iteration:
  * Does not implement Iterable as using the nudge.ecs Iterator is favorable.
@@ -34,14 +33,14 @@ import com.nudge.ecs.util.containers.exceptions.KeyStateConflictException;
  * Anonymous is perfect for single iterations .ie initializations.
  * But keep them around if you are using them repeatedly.
  *
- *
  * @author Frederik Dahl
- * 29/08/2021
+ * 23/09/2021
  */
 
 @SuppressWarnings("unchecked")
 
-public class KVArray<E extends KeyValue> {
+public class KVArray<E extends KeyValue> implements ECSArray<E> {
+
 
     private static final ShortStack freeIDs = new ShortStack();
     private static final short ID_LIMIT = Short.MAX_VALUE;
@@ -56,11 +55,11 @@ public class KVArray<E extends KeyValue> {
     /**
      * ! The Constructor CAN fail: if you for some bizarre esoteric reason have created 32767 Arrays and are not freeing them.
      *
-     * @param capacity the estimated use-case capacity of the Array. (auto-resizable).
-     *                 It also resets to this capacity on clearAndResize(), or when count reaches 0, on removal of Items;
+     * @param initialCap the estimated use-case capacity of the Array. (auto-resizable).
+     *                   It also resets to this capacity on clearAndResize(), or when count reaches 0, on removal of Items;
      */
-    public KVArray(int capacity) {
-        targetCap = Math.max(1,capacity);
+    public KVArray(int initialCap) {
+        targetCap = Math.max(1,initialCap);
         items = (E[]) new KeyValue[targetCap];
         if (freeIDs.isEmpty()) {
             if (genID == ID_LIMIT)
@@ -69,6 +68,9 @@ public class KVArray<E extends KeyValue> {
         } else id = freeIDs.pop();
     }
 
+    public KVArray() {this(DEFAULT_CAPACITY);}
+
+    @Override
     public void iterate(Iterator<E> itr) {
         for (int i = 0; i < count; i++)
             itr.next(items[i]);
@@ -120,6 +122,11 @@ public class KVArray<E extends KeyValue> {
         }
     }
 
+    /**
+     * If empty and
+     * @param index the index
+     * @return the item
+     */
     public E remove(int index) {
         E item = items[index];
         item.onRemoval(id);
@@ -132,7 +139,7 @@ public class KVArray<E extends KeyValue> {
             prev.onReplacement(index,id);
             items[index] = prev;
         }
-        if (count == 0) {
+        if (isEmpty()) {
             if (targetCap < items.length)
                 items = (E[]) new KeyValue[targetCap];
         }
@@ -181,6 +188,7 @@ public class KVArray<E extends KeyValue> {
         return item.equals(items[key]);
     }
 
+    @Override
     public void clear() {
         for (int i = 0; i < count; i++) {
             items[i].onRemoval(id);
@@ -200,47 +208,59 @@ public class KVArray<E extends KeyValue> {
         items = null;
     }
 
-    /**
-     * As to avoid potentially multiple calls to arrayCopy() before adding n new items.
-     * @param n number of additional items planned to be added
-     */
-    public void preAllocate(int n) {
+    @Override
+    public void ensureCapacity(int n) {
         int size = n + count;
         if (size > items.length)
             resize(size);
     }
 
-    public void fit() {
-        if (count > 0)
-            resize(count);
+    @Override
+    public boolean fit(boolean absolute) {
+        if (count == capacity()) return false;
+        int size = absolute ? Math.max(count,1) : Math.max(count, targetCap);
+        if (size == capacity()) return false;
+        resize(size);
+        return true;
     }
 
-    public void setTargetCapacity(int cap) {
-        this.targetCap = Math.max(Math.max(count,1),cap);
-    }
-
-    public boolean isEmpty() {
-        return count == 0;
-    }
-
-    public boolean notEmpty() {
-        return count > 0;
-    }
-
-    public int size() {
+    @Override
+    public int count() {
         return count;
     }
 
+    @Override
+    public float loadFactor() {
+        return (float) count / items.length;
+    }
+
+    @Override
     public int capacity() {
         return items.length;
     }
 
-    private void grow() {
-        resize((items.length*3)/2+1);
+    @Override
+    public int targetCapacity() {
+        return targetCap;
     }
 
-    private void shrink() {
-        resize(Math.max(targetCap,count));
+    @Override
+    public void setTargetCapacity(int cap) {
+        targetCap = Math.max(cap,1);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return count == 0;
+    }
+
+    @Override
+    public boolean notEmpty() {
+        return count > 0;
+    }
+
+    private void grow() {
+        resize(growFormula(capacity()));
     }
 
     private void resize(int size) {

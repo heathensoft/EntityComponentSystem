@@ -1,4 +1,4 @@
-package com.nudge.ecs.util.containers.exceptions;
+package com.nudge.ecs.util.exceptions;
 
 /**
  * KeyStateConflictException is an exception to indicate that an Array / Item provides some key / id with

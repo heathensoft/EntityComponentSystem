@@ -2,6 +2,7 @@ package com.nudge.ecs;
 
 
 import com.nudge.ecs.util.containers.Container;
+import com.nudge.ecs.util.containers.Pool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ComponentPools {
      * This is done after all entities are deleted.
      */
     protected void clearItems() {
-        pools.iterate(item -> item.clear(false));
+        pools.iterate(Pool::clear);
 
     }
 
@@ -162,7 +163,7 @@ public class ComponentPools {
     }
 
     protected int poolCount() {
-        return pools.itemCount();
+        return pools.count();
     }
 
 

@@ -11,29 +11,27 @@ import com.nudge.ecs.util.containers.Container;
 
 public class EntityManager {
 
-    private final ECS ecs;
     private final Container<Entity> entities;
     private final Container<Entity> dirty;
     private final EntityPool pool;
+    private final ECS ecs;
 
 
-    protected EntityManager(ECS ecs, int initialCapacity) {
+    protected EntityManager(ECS ecs, int initialCap) {
+        entities = new Container<>(initialCap);
+        dirty = new Container<>(initialCap);
+        pool = new EntityPool(initialCap);
+        pool.fill(initialCap);
         this.ecs = ecs;
-        entities = new Container<>(initialCapacity);
-        dirty = new Container<>(initialCapacity);
-        pool = new EntityPool(initialCapacity,Short.MAX_VALUE);
-        pool.fill(initialCapacity/2);
     }
-
 
     protected void terminate() {
         entities.iterate(this::remove);
         clean();
         if (entities.notEmpty() || dirty.notEmpty())
-            throw new IllegalStateException("");
-        pool.clear(false);
+            throw new IllegalStateException("TMP exception");
+        pool.clear();
     }
-
 
     public Entity create() {
         Entity e = pool.obtain();
@@ -45,11 +43,11 @@ public class EntityManager {
     /**
      * Used to delete entities (return entities to pool).
      * This removes all components from the entity, and marks it dirty.
-     * Dirty entities get "cleaned" after each EntitySystems' process-loop.
-     * Dirty entities without components gets deleted.
+     * "Dirty" entities get "cleaned" before each ECSystems' process-loop.
+     * Entities marked as dirty without components gets deleted.
      *
      * Note: If you remove an entity then add components to it within
-     * the execution of the SAME EntitySystem, the entity will not get deleted.
+     * the execution of the SAME ECSystem, the entity will not get deleted.
      *
      * @param e the entity to remove
      */
@@ -107,7 +105,7 @@ public class EntityManager {
     }
 
     public int entities() {
-        return entities.itemCount();
+        return entities.count();
     }
 
     public long entitiesCreated() {
@@ -134,8 +132,8 @@ public class EntityManager {
     protected void clean() {
         if (dirty.notEmpty()) {
             final Container<ECSystem> systems = ecs.systemManager.systems;
-            final int systemCount = systems.itemCount();
-            final int dirtyCount = dirty.itemCount();
+            final int systemCount = systems.count();
+            final int dirtyCount = dirty.count();
             for (int i = 0; i < dirtyCount; i++) {
                 Entity e = dirty.get(i);
                 for (int j = 0; j < systemCount; j++)

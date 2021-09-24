@@ -57,11 +57,13 @@ public class CapacityControl {
         accumulator += dt;
         if (accumulator > INTERVAL) {
             accumulator -= INTERVAL;
+            System.out.println(manager.ecs.runTimeStatistics().componentContainersLoadFactor());
             for (byte i = 0; i < timerCount; i++) {
                 if (timers[i] != UP_TO_DATE) {
                     if (!containerTimerMaxed(timers[i]))
-                        if (containerTimerMaxed(++timers[i]))
+                        if (containerTimerMaxed(++timers[i])){
                             manager.attemptRefitContainer(i);
+                        }
                     if (!poolTimerMaxed(timers[i]))
                         if (poolTimerMaxed(timers[i] += 0x10))
                             manager.attemptRefitPool(i);

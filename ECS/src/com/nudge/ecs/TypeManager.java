@@ -91,7 +91,7 @@ public class TypeManager {
 
     private ComponentGroup lookUpGroup(long mask) {
         ComponentGroup group;
-        for (int i = 0; i < groups.itemCount(); i++) {
+        for (int i = 0; i < groups.count(); i++) {
             group = groups.get(i);
             if (group.match(mask)) {
                 return group;
