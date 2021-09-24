@@ -93,7 +93,7 @@ public abstract class ECSystem {
             clean();
             begin();
             processing = true;
-            for (int i = 0; i < entities.size(); i++)
+            for (int i = 0; i < entities.count(); i++)
                 processEntity(entities.get(i),dt);
             processing = false;
             handleWaiting();

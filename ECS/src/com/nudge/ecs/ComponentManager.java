@@ -8,13 +8,7 @@ import java.util.List;
 /**
  *
  * Components are stored and queried here.
- *
- *      Components are indexed by type and entity-id.
- *      Component containers are not tightly stacked. But they are automatically
- *      refitted to save memory. This happens if a container for a specific
- *      component-type has been inactive for more than 5 minutes.
- *      The CapacityControl then checks if there is possible to save space.
- *      If it is, it will shrink that container to fit its outermost component.
+ * Components are indexed by type and entity-id.
  *
  * @author Frederik Dahl
  * 01/09/2021
@@ -59,7 +53,6 @@ public class ComponentManager {
     protected void nullify() { // do this after diagnostics await Termination;
         components.clear();
         pools.nullifyPools();
-
     }
 
     protected <T extends Component> void registerPool(ComponentPool<T> pool, Class<T> clazz) {
@@ -207,7 +200,6 @@ public class ComponentManager {
     }
 
 
-
     // Stats - public in RunTimeStatistics
 
     protected int componentsActive() {
@@ -234,17 +226,8 @@ public class ComponentManager {
         return poolRefits;
     }
 
-
-
-
-    protected Container<Component> getContainer(ComponentType t) {
-        if (t == null) // container will always exist if type exist.
-            throw new IllegalStateException("ComponentType = null");
-        return components.get(t.id());
-    }
-
     protected int getContainerSize(ComponentType t) {
-        return components.get(t.id()).itemCount();
+        return components.get(t.id()).count();
     }
 
     protected int getContainerCapacity(ComponentType t) {
@@ -264,8 +247,7 @@ public class ComponentManager {
         for (ComponentType type: typesList) {
             capacity += getContainerCapacity(type);
             count += getContainerSize(type);
-        }
-        // capacity would never be zero
+        }// capacity would never be zero
         return (float) count / capacity;
     }
 
@@ -281,16 +263,9 @@ public class ComponentManager {
 
     // callback from ContainerControl
     protected void attemptRefitContainer(byte typeID) {
-        System.out.println(typeID);
-        System.out.println(components.get(typeID).capacity());
-
         if (components.get(typeID).fit(false))
-        {
-
             containerRefits++;
-            System.out.println(components.get(typeID).capacity());
 
-        }
     }
 
     // callback from ContainerControl

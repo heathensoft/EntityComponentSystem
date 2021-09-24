@@ -1,9 +1,10 @@
 package com.nudge.ecs.util.containers;
 
-import com.nudge.ecs.util.containers.test.ECSArray;
 import com.nudge.ecs.util.exceptions.EmptyCollectionException;
 
 /**
+ *
+ * Could use a linked list, but I prefer arrays. Circular.
  *
  * !! target capacity is important for all ECSArrays. They are auto-resizable
  * and the targetCap value is the "restingCap" for the arrays.

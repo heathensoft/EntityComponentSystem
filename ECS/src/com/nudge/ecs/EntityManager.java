@@ -105,7 +105,7 @@ public class EntityManager {
     }
 
     public int entities() {
-        return entities.itemCount();
+        return entities.count();
     }
 
     public long entitiesCreated() {
@@ -132,8 +132,8 @@ public class EntityManager {
     protected void clean() {
         if (dirty.notEmpty()) {
             final Container<ECSystem> systems = ecs.systemManager.systems;
-            final int systemCount = systems.itemCount();
-            final int dirtyCount = dirty.itemCount();
+            final int systemCount = systems.count();
+            final int dirtyCount = dirty.count();
             for (int i = 0; i < dirtyCount; i++) {
                 Entity e = dirty.get(i);
                 for (int j = 0; j < systemCount; j++)

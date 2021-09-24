@@ -163,7 +163,7 @@ public class ComponentPools {
     }
 
     protected int poolCount() {
-        return pools.itemCount();
+        return pools.count();
     }
 
 

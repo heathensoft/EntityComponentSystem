@@ -39,11 +39,13 @@ public class Simulation extends InputAdapter {
         // Setting up the ECS and creating the "lab"
         ecs = new ECS(initialCap);
         lab = new Lab(ecs.entityManager());
+
         // Creating our systems
         movementSystem = new MovementSystem(ecs,initialCap);
         collisionSystem = new CollisionSystem(ecs,initialCap);
         dyingSystem = new DyingSystem(ecs,initialCap);
         renderer = new Renderer(ecs,initialCap);
+
         // Initialize the ECS
         ecs.initialize();
         // creating our entities in the lab
@@ -58,7 +60,7 @@ public class Simulation extends InputAdapter {
         dyingSystem.process(dt);
         collisionSystem.process();
         movementSystem.process(dt);
-        ecs.capacityControl(dt);
+        ecs.capacityControl(dt); //
     }
 
     // Processing the rendering system after update

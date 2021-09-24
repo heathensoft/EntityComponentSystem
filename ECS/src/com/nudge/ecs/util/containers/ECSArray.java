@@ -1,4 +1,4 @@
-package com.nudge.ecs.util.containers.test;
+package com.nudge.ecs.util.containers;
 
 import com.nudge.ecs.util.containers.Iterator;
 
@@ -6,7 +6,7 @@ import com.nudge.ecs.util.containers.Iterator;
  *
  * Shared traits of all ECS internal item containers.
  *
- * !! target capacity is important for all ECSArrays. They are auto-resizable
+ * !! target capacity is important for all ECSArrays. They are all auto-resizable
  * and the targetCap value is the "restingCap" for the arrays.
  * In most cases, when you remove the final item and the array length is greater
  * than the targetCap it will shrink back to that "restingCap".
@@ -24,7 +24,6 @@ import com.nudge.ecs.util.containers.Iterator;
 
 public interface ECSArray<E> {
 
-    int MIN_CAPACITY = 8;
     int DEFAULT_CAPACITY = 16;
 
     void iterate(Iterator<E> itr);
